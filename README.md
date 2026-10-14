@@ -1,12 +1,12 @@
 # Voxora
 
-**Talk to your documents.** Voxora is a local-first, voice-enabled equipment manual assistant with speech input, spoken answers, exact visible citations with page references, and multi-document comparison. The interface and API run together in a lightweight Next.js application; no external database, vector store, or complicated microservices are required.
+**Talk to your documents.** Voxora is a voice-first Retrieval-Augmented Generation (RAG) system with speech input, spoken answers, exact visible citations with page references, and multi-document comparison. The interface and API run together in a lightweight Next.js application; no external database, vector store, or complicated microservices are required.
 
 ---
 
 ## What is included
 
-- **Custom PDF Upload:** Upload any text-based PDF equipment manual (up to 8 MB, up to 10 pages).
+- **Custom PDF Upload:** Upload any text-based PDF documents (manuals, reports, guides, specs) up to 8 MB and 10 pages.
 - **Exact Page Extraction & Chunking:** Extracts text page-by-page using page boundary delimiters so all citations retain their actual source page numbers.
 - **Voice In, Spoken Out:** Speak questions aloud via browser speech recognition; automatically hear answers read aloud via speech synthesis.
 - **Visible Quotations & Page Citations:** Every answer returns grounded excerpt quotations and exact page citations.
