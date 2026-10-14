@@ -123,8 +123,12 @@ export async function POST(request: Request) {
       relevance: Math.round(match.score * 100) / 100,
     }));
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
+    const rawApiKey = process.env.GROQ_API_KEY?.trim().replace(/^["']|["']$/g, '');
+    const selectedModel =
+      process.env.GROQ_MODEL?.trim().replace(/^["']|["']$/g, '') ||
+      'llama-3.3-70b-versatile';
+
+    if (!rawApiKey) {
       const latencyMs = Date.now() - startTime;
       return NextResponse.json({
         answer: makeLocalAnswer(question, matches),
@@ -144,7 +148,7 @@ export async function POST(request: Request) {
       const latencyMs = Date.now() - startTime;
       return NextResponse.json({
         answer:
-          "The uploaded documents do not contain information to answer that question.",
+          'The uploaded documents do not contain information to answer that question.',
         sources: [],
         mode: 'ai',
         latencyMs,
@@ -170,78 +174,79 @@ export async function POST(request: Request) {
       content: msg.content,
     }));
 
-    const client = new Groq({ apiKey });
-    const completion = await client.chat.completions.create({
-      model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-      temperature: 0.1,
-      max_tokens: 700,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are Voxora, an accurate voice-first document intelligence and RAG assistant. Answer strictly and only from the supplied source passages. If the passages do not contain the answer, explicitly state that the documents do not provide this information. Never invent facts, make assumptions, or draw on outside knowledge. Keep spoken answers concise, direct, and conversational (suitable for speech synthesis). Always provide exact page citations when referencing facts. If multiple models, documents, or versions differ, clearly highlight the difference and name each document and page. Understand follow-up questions within the context of recent turns.',
-        },
-        ...formattedHistory,
-        {
-          role: 'user',
-          content: `Question: ${question}\n\nRetrieved source passages:\n${context}`,
-        },
-      ],
-    });
+    let answer = '';
+    let mode: 'ai' | 'local' = 'ai';
+    let warning: string | undefined;
+    const usage = {
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      estimatedCostUsd: 0,
+    };
 
-    const answer = completion.choices[0]?.message?.content?.trim();
-    if (!answer)
-      return NextResponse.json(
-        { error: 'The AI service returned an empty answer. Please try again.' },
-        { status: 502 },
+    try {
+      const client = new Groq({ apiKey: rawApiKey });
+      const completion = await client.chat.completions.create({
+        model: selectedModel,
+        temperature: 0.1,
+        max_tokens: 700,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are Voxora, an accurate voice-first document intelligence and RAG assistant. Answer strictly and only from the supplied source passages. If the passages do not contain the answer, explicitly state that the documents do not provide this information. Never invent facts, make assumptions, or draw on outside knowledge. Keep spoken answers concise, direct, and conversational (suitable for speech synthesis). Always provide exact page citations when referencing facts. If multiple models, documents, or versions differ, clearly highlight the difference and name each document and page. Understand follow-up questions within the context of recent turns.',
+          },
+          ...formattedHistory,
+          {
+            role: 'user',
+            content: `Question: ${question}\n\nRetrieved source passages:\n${context}`,
+          },
+        ],
+      });
+
+      answer = completion.choices[0]?.message?.content?.trim() || '';
+      if (!answer) {
+        throw new Error('The AI service returned an empty answer.');
+      }
+
+      const pricing = getModelPricing(selectedModel);
+      usage.promptTokens = completion.usage?.prompt_tokens ?? 0;
+      usage.completionTokens = completion.usage?.completion_tokens ?? 0;
+      usage.totalTokens = completion.usage?.total_tokens ?? 0;
+
+      const inputCost = (usage.promptTokens * pricing.inputPerMillion) / 1_000_000;
+      const outputCost = (usage.completionTokens * pricing.outputPerMillion) / 1_000_000;
+      usage.estimatedCostUsd = Number((inputCost + outputCost).toFixed(6));
+    } catch (aiError) {
+      console.error(
+        'Groq AI call failed, falling back to local passage retrieval:',
+        aiError,
       );
+      const errMsg =
+        aiError instanceof Error ? aiError.message : String(aiError);
+      answer = makeLocalAnswer(question, matches);
+      mode = 'local';
+      warning = `AI generation was unavailable (${errMsg}). Answer served via local passage retrieval.`;
+    }
 
-    const selectedModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-    const pricing = getModelPricing(selectedModel);
-
-    const promptTokens = completion.usage?.prompt_tokens ?? 0;
-    const completionTokens = completion.usage?.completion_tokens ?? 0;
-    const totalTokens = completion.usage?.total_tokens ?? 0;
-
-    // Exact cost calculation based on official Groq rates per 1M tokens
-    const inputCost = (promptTokens * pricing.inputPerMillion) / 1_000_000;
-    const outputCost = (completionTokens * pricing.outputPerMillion) / 1_000_000;
-    const estimatedCostUsd = Number((inputCost + outputCost).toFixed(6));
     const latencyMs = Date.now() - startTime;
-
     return NextResponse.json({
       answer,
       sources,
-      mode: 'ai',
+      mode,
       latencyMs,
-      usage: {
-        promptTokens,
-        completionTokens,
-        totalTokens,
-        estimatedCostUsd,
-      },
+      usage,
+      warning,
     });
   } catch (error) {
-    console.error('Question answering failed', error);
-    const status = (error as { status?: number })?.status;
-    if (status === 401)
-      return NextResponse.json(
-        {
-          error:
-            'The Groq API key was rejected. Check GROQ_API_KEY in your .env.local file.',
-        },
-        { status: 502 },
-      );
-    if (status === 429)
-      return NextResponse.json(
-        {
-          error:
-            'The AI service rate limit was reached. Wait a moment and try again.',
-        },
-        { status: 429 },
-      );
+    console.error('Question answering pipeline failed', error);
     return NextResponse.json(
-      { error: 'Something went wrong while answering. Please try again.' },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Something went wrong while answering. Please try again.',
+      },
       { status: 500 },
     );
   }

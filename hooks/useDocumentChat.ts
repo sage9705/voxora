@@ -15,6 +15,7 @@ type ApiAnswer = {
     totalTokens?: number;
     estimatedCostUsd?: number;
   };
+  warning?: string;
 };
 
 function generateId(): string {
@@ -203,6 +204,9 @@ export function useDocumentChat() {
         }
 
         const result = data as ApiAnswer;
+        if (result.warning) {
+          setNotice(result.warning);
+        }
         const latencyMs =
           result.latencyMs ?? Math.round(performance.now() - startTime);
 
