@@ -36,18 +36,13 @@ export default function Home() {
     askQuestion,
   } = useDocumentChat();
 
+  const handleAskRef = useRef<(text: string, fromVoice: boolean) => void>(
+    () => {},
+  );
+
   const { speak, cancel: cancelSpeech } = useSpeechSynthesis({
     onError: setNotice,
   });
-
-  const { listening, toggleVoice } = useVoiceRecognition({
-    onTranscript: setQuestion,
-    onError: setNotice,
-  });
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  }, [dark]);
 
   const handleAsk = useCallback(
     (promptText = question, fromVoice = false) => {
@@ -63,6 +58,23 @@ export default function Home() {
     },
     [askQuestion, autoSpeak, question, speak],
   );
+
+  // Keep ref in sync so the voice callback never captures a stale closure
+  useEffect(() => {
+    handleAskRef.current = handleAsk;
+  }, [handleAsk]);
+
+  const { listening, toggleVoice } = useVoiceRecognition({
+    onTranscript: setQuestion,
+    onFinalTranscript: useCallback((text: string) => {
+      handleAskRef.current(text, true);
+    }, []),
+    onError: setNotice,
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  }, [dark]);
 
   const handleClear = useCallback(() => {
     clearConversation();
