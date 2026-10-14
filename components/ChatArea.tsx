@@ -7,6 +7,7 @@ import {
   BookOpen,
   History,
   Trash2,
+  User,
   Volume2,
 } from 'lucide-react';
 import type { ChatMessage } from '@/lib/types';
@@ -24,6 +25,138 @@ type ChatAreaProps = {
   onReadAloud: (text: string) => void;
   children?: React.ReactNode;
 };
+
+function parseInline(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*[^*]+\*\*|\[Page\s*\d+\]|`[^`]+`)/g;
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      parts.push(text.slice(lastIdx, match.index));
+    }
+    const token = match[0];
+    if (token.startsWith('**') && token.endsWith('**')) {
+      parts.push(<strong key={match.index}>{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith('[Page') && token.endsWith(']')) {
+      parts.push(
+        <span className="inline-page-badge" key={match.index}>
+          {token.slice(1, -1)}
+        </span>,
+      );
+    } else if (token.startsWith('`') && token.endsWith('`')) {
+      parts.push(
+        <code className="inline-code" key={match.index}>
+          {token.slice(1, -1)}
+        </code>,
+      );
+    } else {
+      parts.push(token);
+    }
+    lastIdx = regex.lastIndex;
+  }
+  if (lastIdx < text.length) {
+    parts.push(text.slice(lastIdx));
+  }
+  return parts.length ? parts : [text];
+}
+
+function FormattedContent({ content }: { content: string }) {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: { type: 'ol' | 'ul'; items: React.ReactNode[] } | null = null;
+
+  const flushList = () => {
+    if (currentList) {
+      if (currentList.type === 'ol') {
+        elements.push(
+          <ol key={`ol-${elements.length}`} className="formatted-steps">
+            {currentList.items.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ol>,
+        );
+      } else {
+        elements.push(
+          <ul key={`ul-${elements.length}`} className="formatted-bullets">
+            {currentList.items.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>,
+        );
+      }
+      currentList = null;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      flushList();
+      continue;
+    }
+
+    // Numbered lists e.g. "1. Step description"
+    const numMatch = trimmed.match(/^(\d+)[\.\)]\s+(.+)$/);
+    if (numMatch) {
+      if (!currentList || currentList.type !== 'ol') {
+        flushList();
+        currentList = { type: 'ol', items: [] };
+      }
+      currentList.items.push(parseInline(numMatch[2]));
+      continue;
+    }
+
+    // Bullet lists e.g. "- Description" or "* Description"
+    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+    if (bulletMatch) {
+      if (!currentList || currentList.type !== 'ul') {
+        flushList();
+        currentList = { type: 'ul', items: [] };
+      }
+      currentList.items.push(parseInline(bulletMatch[1]));
+      continue;
+    }
+
+    flushList();
+
+    // Blockquote e.g. "> Warning: ..."
+    if (trimmed.startsWith('>')) {
+      const quoteText = trimmed.replace(/^>\s*/, '');
+      elements.push(
+        <blockquote key={`q-${i}`} className="formatted-quote">
+          {parseInline(quoteText)}
+        </blockquote>,
+      );
+      continue;
+    }
+
+    // Headers e.g. "### Heading"
+    if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
+      const headingText = trimmed.replace(/^#+\s*/, '');
+      elements.push(
+        <h4 key={`h-${i}`} className="formatted-heading">
+          {parseInline(headingText)}
+        </h4>,
+      );
+      continue;
+    }
+
+    // Normal paragraph
+    elements.push(
+      <p key={`p-${i}`} className="formatted-p">
+        {parseInline(trimmed)}
+      </p>,
+    );
+  }
+
+  flushList();
+
+  return <div className="formatted-content">{elements}</div>;
+}
 
 export function ChatArea({
   documentsCount,
@@ -113,7 +246,7 @@ export function ChatArea({
                   {message.role === 'assistant' ? (
                     <AudioLines size={17} />
                   ) : (
-                    'Y'
+                    <User size={16} />
                   )}
                 </div>
                 <div className="message-body">
@@ -166,7 +299,9 @@ export function ChatArea({
                       </>
                     )}
                   </div>
-                  <div className="message-text">{message.content}</div>
+                  <div className="message-text">
+                    <FormattedContent content={message.content} />
+                  </div>
                   {message.role === 'assistant' && (
                     <div className="message-actions">
                       <button onClick={() => onReadAloud(message.content)}>

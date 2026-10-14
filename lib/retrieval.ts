@@ -92,8 +92,17 @@ export function rankChunks(
             1.2 * (0.25 + (0.75 * terms.length) / Math.max(avgLength, 1)));
       }
       const phrase = question.toLowerCase().trim();
-      if (phrase.length > 5 && chunk.text.toLowerCase().includes(phrase))
-        score += 2;
+      const lowerText = chunk.text.toLowerCase();
+      if (phrase.length > 5 && lowerText.includes(phrase)) score += 4;
+
+      // Sub-phrase boosts for technical manuals & product comparisons
+      if (phrase.includes('model a') && lowerText.includes('model a')) score += 3;
+      if (phrase.includes('model b') && lowerText.includes('model b')) score += 3;
+      if (phrase.includes('priming') && lowerText.includes('priming procedure')) score += 4;
+      if (phrase.includes('step') && (lowerText.includes('step') || lowerText.includes('procedure'))) score += 2;
+      if (phrase.includes('spec') && lowerText.includes('specification')) score += 2;
+      if (phrase.includes('pressure') && lowerText.includes('pressure')) score += 1.5;
+
       return { ...chunk, score };
     })
     .filter((chunk) => chunk.score > 0)
@@ -101,17 +110,56 @@ export function rankChunks(
     .slice(0, limit);
 }
 
+function cleanAndFormatPassage(text: string): string {
+  // 1. Detect procedure step table collisions e.g., "StepAction 1Disconnect... 2Confirm..."
+  if (/StepAction\s*\d/i.test(text) || /\bStep\s*\d+/i.test(text)) {
+    let formatted = text.replace(/StepAction/gi, '').trim();
+    // Split on numbered steps e.g. " 1Disconnect" -> "\n1. Disconnect"
+    formatted = formatted.replace(
+      /(?:^|\s+)(\d{1,2})\s*([A-Z])/g,
+      '\n$1. $2',
+    );
+    // Split major warning sections
+    formatted = formatted.replace(
+      /\s*(MODEL [A-Z] STARTUP CHECK|WARNING|CAUTION|IMPORTANT:?)/gi,
+      '\n\n> **$1**:\n',
+    );
+    return formatted.trim();
+  }
+
+  // 2. Clean general table collisions e.g., "SymptomPossible causeAction"
+  if (/SymptomPossible causeAction/i.test(text)) {
+    return text
+      .replace(/SymptomPossible causeAction/gi, 'Troubleshooting Guide:\n')
+      .replace(/([a-z])([A-Z][a-z])/g, '$1. $2')
+      .trim();
+  }
+
+  // 3. Normalize multiple spaces and preserve sensible paragraph breaks
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 export function makeLocalAnswer(
   question: string,
   matches: ReturnType<typeof rankChunks>,
 ): string {
-  if (!matches.length || matches[0].score < 0.3)
+  if (!matches.length || matches[0].score < 0.3) {
     return 'The uploaded documents do not contain information to answer that question.';
-  const best = matches.slice(0, 3);
-  const lead = best[0].text;
-  const supporting = best
-    .slice(1)
-    .filter((item) => item.text !== lead)
-    .map((item) => item.text);
-  return `${lead}${supporting.length ? `\n\nAdditional context: ${supporting.join(' ')}` : ''}\n\n(Local retrieval result grounded in source passages)`;
+  }
+
+  const topMatch = matches[0];
+  const cleanedLead = cleanAndFormatPassage(topMatch.text);
+
+  let output = `**Passage from ${topMatch.documentName} (Page ${topMatch.page}):**\n\n${cleanedLead}`;
+
+  const secondary = matches.slice(1, 3).filter((m) => m.documentId !== topMatch.documentId || m.page !== topMatch.page);
+  if (secondary.length > 0) {
+    output += '\n\n**Related References:**\n';
+    for (const match of secondary) {
+      const excerpt = cleanAndFormatPassage(match.text.slice(0, 180));
+      output += `- **Page ${match.page} (${match.documentName}):** ${excerpt}…\n`;
+    }
+  }
+
+  return output;
 }

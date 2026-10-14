@@ -1276,10 +1276,12 @@ h1 span {
 }
 
 .message-meta {
-  height: 26px;
+  min-height: 26px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
+  margin-bottom: 6px;
 }
 
 .message-meta strong {
@@ -1301,10 +1303,79 @@ h1 span {
 
 .message-text {
   font-size: 15px;
-  line-height: 1.75;
+  line-height: 1.7;
   color: var(--text);
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.formatted-content p {
+  margin: 0 0 10px;
+}
+
+.formatted-content p:last-child {
+  margin-bottom: 0;
+}
+
+.formatted-steps,
+.formatted-bullets {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formatted-steps li,
+.formatted-bullets li {
+  line-height: 1.6;
+}
+
+.formatted-heading {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 14px 0 6px;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.formatted-heading:first-child {
+  margin-top: 0;
+}
+
+.formatted-quote {
+  margin: 10px 0 12px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel-raised);
+  border-radius: 0 7px 7px 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.formatted-content strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.inline-page-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 11px;
+  border-radius: 4px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line-strong);
+  color: var(--accent);
+  margin: 0 3px;
+  font-family: 'DM Mono', monospace;
+}
+
+.inline-code {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
 }
 
 .message-actions {

@@ -184,46 +184,70 @@ export async function POST(request: Request) {
       estimatedCostUsd: 0,
     };
 
-    try {
-      const client = new Groq({ apiKey: rawApiKey });
-      const completion = await client.chat.completions.create({
-        model: selectedModel,
-        temperature: 0.1,
-        max_tokens: 700,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are Voxora, an accurate voice-first document intelligence and RAG assistant. Answer strictly and only from the supplied source passages. If the passages do not contain the answer, explicitly state that the documents do not provide this information. Never invent facts, make assumptions, or draw on outside knowledge. Keep spoken answers concise, direct, and conversational (suitable for speech synthesis). Always provide exact page citations when referencing facts. If multiple models, documents, or versions differ, clearly highlight the difference and name each document and page. Understand follow-up questions within the context of recent turns.',
-          },
-          ...formattedHistory,
-          {
-            role: 'user',
-            content: `Question: ${question}\n\nRetrieved source passages:\n${context}`,
-          },
-        ],
-      });
+    const candidateModels = Array.from(
+      new Set([
+        selectedModel,
+        'llama-3.1-8b-instant',
+        'llama-3.3-70b-versatile',
+        'llama-3.1-70b-versatile',
+        'mixtral-8x7b-32768',
+      ]),
+    );
 
-      answer = completion.choices[0]?.message?.content?.trim() || '';
-      if (!answer) {
-        throw new Error('The AI service returned an empty answer.');
+    const client = new Groq({ apiKey: rawApiKey });
+    let lastError: unknown = null;
+    let successfulModel = selectedModel;
+
+    for (const modelToTry of candidateModels) {
+      try {
+        const completion = await client.chat.completions.create({
+          model: modelToTry,
+          temperature: 0.1,
+          max_tokens: 750,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are Voxora, an accurate voice-first document intelligence and RAG assistant. Answer strictly and only from the supplied source passages. If the passages do not contain the answer, explicitly state that the documents do not provide this information. Never invent facts, make assumptions, or draw on outside knowledge.\n\nFormatting Guidelines:\n- Format your answer with clean, readable markdown.\n- When describing steps or procedures, format them as clean numbered lists (e.g. 1. Step one, 2. Step two).\n- Use bold text for key terms, warnings, and specifications.\n- Keep paragraphs separated by blank lines.\n- Always include exact page citations when referencing facts (e.g. [Page 3]).\n- Keep spoken phrasing natural and conversational for voice synthesis.',
+            },
+            ...formattedHistory,
+            {
+              role: 'user',
+              content: `Question: ${question}\n\nRetrieved source passages:\n${context}`,
+            },
+          ],
+        });
+
+        const candidateAnswer =
+          completion.choices[0]?.message?.content?.trim() || '';
+        if (candidateAnswer) {
+          answer = candidateAnswer;
+          successfulModel = modelToTry;
+          const pricing = getModelPricing(successfulModel);
+          usage.promptTokens = completion.usage?.prompt_tokens ?? 0;
+          usage.completionTokens = completion.usage?.completion_tokens ?? 0;
+          usage.totalTokens = completion.usage?.total_tokens ?? 0;
+
+          const inputCost =
+            (usage.promptTokens * pricing.inputPerMillion) / 1_000_000;
+          const outputCost =
+            (usage.completionTokens * pricing.outputPerMillion) / 1_000_000;
+          usage.estimatedCostUsd = Number((inputCost + outputCost).toFixed(6));
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`Groq model ${modelToTry} was unavailable, trying next candidate:`, err);
       }
+    }
 
-      const pricing = getModelPricing(selectedModel);
-      usage.promptTokens = completion.usage?.prompt_tokens ?? 0;
-      usage.completionTokens = completion.usage?.completion_tokens ?? 0;
-      usage.totalTokens = completion.usage?.total_tokens ?? 0;
-
-      const inputCost = (usage.promptTokens * pricing.inputPerMillion) / 1_000_000;
-      const outputCost = (usage.completionTokens * pricing.outputPerMillion) / 1_000_000;
-      usage.estimatedCostUsd = Number((inputCost + outputCost).toFixed(6));
-    } catch (aiError) {
+    if (!answer) {
       console.error(
-        'Groq AI call failed, falling back to local passage retrieval:',
-        aiError,
+        'All Groq AI models failed or unavailable, falling back to local passage retrieval:',
+        lastError,
       );
       const errMsg =
-        aiError instanceof Error ? aiError.message : String(aiError);
+        lastError instanceof Error ? lastError.message : String(lastError);
       answer = makeLocalAnswer(question, matches);
       mode = 'local';
       warning = `AI generation was unavailable (${errMsg}). Answer served via local passage retrieval.`;
