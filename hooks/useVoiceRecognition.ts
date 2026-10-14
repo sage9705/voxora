@@ -28,8 +28,14 @@ type SpeechRecognitionInstance = {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
-/** Milliseconds of silence after speech has started before auto-submitting */
-const SILENCE_TIMEOUT_MS = 3000;
+/**
+ * Silence detection configuration.
+ * After speech has been detected, if audio stays below the threshold
+ * for SILENCE_DURATION_MS, the recording is auto-submitted.
+ */
+const SILENCE_THRESHOLD = 0.015; // RMS energy below this = silence
+const SILENCE_DURATION_MS = 2500; // 2.5 seconds of silence → auto-submit
+const ANALYSIS_INTERVAL_MS = 100; // Sample audio level every 100ms
 
 interface UseVoiceRecognitionOptions {
   onTranscript: (transcript: string) => void;
@@ -50,14 +56,32 @@ export function useVoiceRecognition({
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+
   const finalTranscriptRef = useRef('');
   const isStoppingRef = useRef(false);
+  const hasSpeechRef = useRef(false); // True once user has spoken above threshold
+  const silenceStartRef = useRef<number | null>(null); // Timestamp when silence began
 
   const clearSilenceTimer = useCallback(() => {
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
+  }, []);
+
+  const stopSilenceAnalysis = useCallback(() => {
+    if (analysisIntervalRef.current) {
+      clearInterval(analysisIntervalRef.current);
+      analysisIntervalRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
   }, []);
 
   const releaseMediaStream = useCallback(() => {
@@ -71,10 +95,11 @@ export function useVoiceRecognition({
   useEffect(() => {
     return () => {
       clearSilenceTimer();
+      stopSilenceAnalysis();
       recognitionRef.current?.abort?.();
       releaseMediaStream();
     };
-  }, [clearSilenceTimer, releaseMediaStream]);
+  }, [clearSilenceTimer, stopSilenceAnalysis, releaseMediaStream]);
 
   // Transcribe recorded audio blob using server-side Whisper (works in Brave, Safari, Firefox, Chrome)
   const transcribeAudioBlob = useCallback(
@@ -110,6 +135,7 @@ export function useVoiceRecognition({
     if (isStoppingRef.current) return;
     isStoppingRef.current = true;
     clearSilenceTimer();
+    stopSilenceAnalysis();
     setListening(false);
 
     // Stop Web Speech if active
@@ -161,11 +187,67 @@ export function useVoiceRecognition({
     isStoppingRef.current = false;
   }, [
     clearSilenceTimer,
+    stopSilenceAnalysis,
     onFinalTranscript,
     onTranscript,
     releaseMediaStream,
     transcribeAudioBlob,
   ]);
+
+  /**
+   * Start monitoring audio levels from the microphone stream.
+   * Uses Web Audio API AnalyserNode to compute RMS energy.
+   * Once speech is detected (above threshold), begins tracking silence.
+   * After SILENCE_DURATION_MS of continuous silence, auto-submits.
+   */
+  const startSilenceDetection = useCallback(
+    (stream: MediaStream, stopFn: () => void) => {
+      try {
+        const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        audioContextRef.current = audioContext;
+
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const dataArray = new Float32Array(analyser.fftSize);
+        hasSpeechRef.current = false;
+        silenceStartRef.current = null;
+
+        analysisIntervalRef.current = setInterval(() => {
+          if (!analyserRef.current) return;
+
+          analyserRef.current.getFloatTimeDomainData(dataArray);
+
+          // Compute RMS energy
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i] * dataArray[i];
+          }
+          const rms = Math.sqrt(sum / dataArray.length);
+
+          if (rms > SILENCE_THRESHOLD) {
+            // User is speaking
+            hasSpeechRef.current = true;
+            silenceStartRef.current = null;
+          } else if (hasSpeechRef.current) {
+            // User was speaking but now it's quiet
+            if (!silenceStartRef.current) {
+              silenceStartRef.current = Date.now();
+            } else if (Date.now() - silenceStartRef.current >= SILENCE_DURATION_MS) {
+              // Sustained silence after speech → auto-submit
+              stopFn();
+            }
+          }
+        }, ANALYSIS_INTERVAL_MS);
+      } catch (err) {
+        console.warn('Audio level analysis not available:', err);
+      }
+    },
+    [],
+  );
 
   const toggleVoice = useCallback(async () => {
     if (typeof window === 'undefined') return;
@@ -180,7 +262,10 @@ export function useVoiceRecognition({
     finalTranscriptRef.current = '';
     audioChunksRef.current = [];
     isStoppingRef.current = false;
+    hasSpeechRef.current = false;
+    silenceStartRef.current = null;
     clearSilenceTimer();
+    stopSilenceAnalysis();
 
     // 1. Request microphone access for audio recording (Universal across all browsers)
     let stream: MediaStream | null = null;
@@ -227,7 +312,12 @@ export function useVoiceRecognition({
       console.warn('MediaRecorder error:', recorderError);
     }
 
-    // 2. Optionally start Web Speech API for real-time live interim feedback
+    // 2. Start audio-level silence detection (works in ALL browsers)
+    startSilenceDetection(stream, () => {
+      void stopAndSubmit();
+    });
+
+    // 3. Optionally start Web Speech API for real-time live interim feedback
     const speechWindow = window as Window & {
       SpeechRecognition?: SpeechRecognitionConstructor;
       webkitSpeechRecognition?: SpeechRecognitionConstructor;
@@ -248,8 +338,6 @@ export function useVoiceRecognition({
         };
 
         instance.onresult = (event) => {
-          clearSilenceTimer();
-
           let interim = '';
           let accumulated = '';
 
@@ -270,11 +358,6 @@ export function useVoiceRecognition({
           const currentText = (accumulated + interim).trim();
           if (currentText) {
             onTranscript(currentText);
-
-            // Once user has spoken something, start silence timer to auto-submit after a comfortable pause
-            silenceTimerRef.current = setTimeout(() => {
-              void stopAndSubmit();
-            }, SILENCE_TIMEOUT_MS);
           }
         };
 
@@ -306,7 +389,9 @@ export function useVoiceRecognition({
     listening,
     onError,
     onTranscript,
+    startSilenceDetection,
     stopAndSubmit,
+    stopSilenceAnalysis,
   ]);
 
   const stopVoice = useCallback(() => {
@@ -319,3 +404,4 @@ export function useVoiceRecognition({
     stopVoice,
   };
 }
+
