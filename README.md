@@ -17,7 +17,7 @@
   - Ingestion time measured separately in milliseconds.
   - Question-to-first-audible-answer latency measured directly in the UI.
   - Token consumption and variable cost estimated and displayed per question.
-- **Local Fallback Mode:** Works completely offline in local passage-retrieval mode without any API key, or with Groq (`llama-3.3-70b-versatile`) for AI synthesis.
+- **Local Fallback Mode:** Works completely offline in local passage-retrieval mode without any API key, or with Groq (`llama-3.1-8b-instant` / `llama-3.3-70b-versatile` per [Groq Models](https://console.groq.com/docs/models)) for AI synthesis.
 
 ---
 
@@ -39,7 +39,7 @@ cp .env.example .env.local    # On Windows: copy .env.example .env.local
 npm run dev
 ```
 
-Then open <http://localhost:3000> in **Google Chrome** or **Microsoft Edge** (recommended for Web Speech API voice support).
+Then open <http://localhost:3000> in **Brave**, **Google Chrome**, **Microsoft Edge**, or **Safari**.
 
 ### Enable AI Synthesis (Groq)
 
@@ -48,7 +48,9 @@ Then open <http://localhost:3000> in **Google Chrome** or **Microsoft Edge** (re
 
 ```env
 GROQ_API_KEY=gsk_your_key_here
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=llama-3.1-8b-instant
+# Alternative flagship model: GROQ_MODEL=llama-3.3-70b-versatile
+# See official supported models: https://console.groq.com/docs/models
 ```
 
 3. Restart the server (`npm run dev`).

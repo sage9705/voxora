@@ -56,9 +56,8 @@ Evaluated on the included fictional equipment manuals: `NexGen NX-300 Manual v1.
 
 ## 5. Exact AI Tools and Models Used
 
-- **Primary Reasoning Model:** Meta `llama-3.3-70b-versatile` hosted on GroqCloud LPUs.
-- **Alternative Configurable Models:** `llama-3.1-8b-instant`, `mixtral-8x7b-32768`.
-- **Speech Input & Output:** Native browser Web Speech API (`SpeechRecognition` / `SpeechSynthesis`). Zero cloud API dependencies.
+- **Primary Reasoning Models:** Meta `llama-3.1-8b-instant` and `llama-3.3-70b-versatile` hosted on GroqCloud LPUs (per official [Groq Models](https://console.groq.com/docs/models)).
+- **Speech Input & Output:** Dual-engine architecture with universal browser `MediaRecorder` + Groq Whisper (`whisper-large-v3-turbo`) and client Web Speech API (`SpeechRecognition` / `SpeechSynthesis`). Zero proprietary vendor lock-in.
 - **Coding & Development Tools:** Antigravity IDE (DeepMind Agentic Assistant).
 
 ### How Output Was Checked (Example: Question 5 & 2):

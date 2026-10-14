@@ -6,12 +6,17 @@ import type { SourceChunk } from '@/lib/types';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-// Official GroqCloud API Pricing (source: https://groq.com/pricing)
+// Official GroqCloud API Pricing (source: https://console.groq.com/docs/models)
 // Rates are strictly measured per 1,000,000 tokens (USD)
 const GROQ_MODEL_PRICING: Record<
   string,
   { inputPerMillion: number; outputPerMillion: number }
 > = {
+  // Meta Llama 3.1 8B Instant: $0.05 input / $0.08 output per 1M tokens
+  'llama-3.1-8b-instant': {
+    inputPerMillion: 0.05,
+    outputPerMillion: 0.08,
+  },
   // Meta Llama 3.3 70B Versatile: $0.59 input / $0.79 output per 1M tokens
   'llama-3.3-70b-versatile': {
     inputPerMillion: 0.59,
@@ -21,32 +26,12 @@ const GROQ_MODEL_PRICING: Record<
     inputPerMillion: 0.59,
     outputPerMillion: 0.79,
   },
-  // Meta Llama 3.1 70B: $0.59 input / $0.79 output per 1M tokens
-  'llama-3.1-70b-versatile': {
-    inputPerMillion: 0.59,
-    outputPerMillion: 0.79,
-  },
-  // Meta Llama 3.1 8B Instant: $0.05 input / $0.08 output per 1M tokens
-  'llama-3.1-8b-instant': {
-    inputPerMillion: 0.05,
-    outputPerMillion: 0.08,
-  },
-  // Mixtral 8x7B: $0.24 input / $0.24 output per 1M tokens
-  'mixtral-8x7b-32768': {
-    inputPerMillion: 0.24,
-    outputPerMillion: 0.24,
-  },
-  // Gemma 2 9B: $0.20 input / $0.20 output per 1M tokens
-  'gemma2-9b-it': {
-    inputPerMillion: 0.2,
-    outputPerMillion: 0.2,
-  },
 };
 
 function getModelPricing(modelName: string) {
   return (
     GROQ_MODEL_PRICING[modelName.toLowerCase()] ??
-    GROQ_MODEL_PRICING['llama-3.3-70b-versatile']
+    GROQ_MODEL_PRICING['llama-3.1-8b-instant']
   );
 }
 
@@ -161,18 +146,21 @@ export async function POST(request: Request) {
       });
     }
 
-    const context = matches
+    const contextMatches = matches.slice(0, 4);
+    const context = contextMatches
       .map(
         (match, index) =>
           `[SOURCE ${index + 1}: ${match.documentName}, page ${match.page}]\n${match.text}`,
       )
       .join('\n\n');
 
-    // Build message thread with conversational history for follow-ups
-    const formattedHistory = history.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
+    // Build message thread with clean conversational history for follow-ups
+    const formattedHistory = history
+      .filter((msg) => !msg.content.includes('AI generation was unavailable'))
+      .map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
 
     let answer = '';
     let mode: 'ai' | 'local' = 'ai';
@@ -187,10 +175,10 @@ export async function POST(request: Request) {
     const candidateModels = Array.from(
       new Set([
         selectedModel,
-        'llama-3.1-8b-instant',
         'llama-3.3-70b-versatile',
-        'llama-3.1-70b-versatile',
-        'mixtral-8x7b-32768',
+        'llama-3.1-8b-instant',
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-120b',
       ]),
     );
 

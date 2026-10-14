@@ -7,12 +7,20 @@ const STOP_WORDS = new Set(
 );
 
 export function tokenize(value: string): string[] {
-  return (
+  const words =
     value
       .toLowerCase()
       .match(/[a-z0-9]+(?:[.'’-][a-z0-9]+)*/g)
-      ?.filter((word) => word.length > 1 && !STOP_WORDS.has(word)) ?? []
-  );
+      ?.filter((word) => word.length > 1 && !STOP_WORDS.has(word)) ?? [];
+
+  const tokens = new Set<string>();
+  for (const word of words) {
+    tokens.add(word);
+    if (word.endsWith('s') && word.length > 3 && !word.endsWith('ss')) {
+      tokens.add(word.slice(0, -1));
+    }
+  }
+  return Array.from(tokens);
 }
 
 export function splitIntoChunks(
@@ -83,8 +91,8 @@ export function rankChunks(
         if (!frequency) continue;
         const idf = Math.log(
           1 +
-            (docs.length - (df.get(term) ?? 0) + 0.5) /
-              ((df.get(term) ?? 0) + 0.5),
+          (docs.length - (df.get(term) ?? 0) + 0.5) /
+          ((df.get(term) ?? 0) + 0.5),
         );
         score +=
           (idf * (frequency * 2.2)) /
@@ -95,13 +103,23 @@ export function rankChunks(
       const lowerText = chunk.text.toLowerCase();
       if (phrase.length > 5 && lowerText.includes(phrase)) score += 4;
 
+      const isLookingForProcedure =
+        /step|procedure|how to|setup|priming|install/i.test(question) &&
+        !/troubleshoot|fault|problem|fail|leak|error/i.test(question);
+
       // Sub-phrase boosts for technical manuals & product comparisons
-      if (phrase.includes('model a') && lowerText.includes('model a')) score += 3;
-      if (phrase.includes('model b') && lowerText.includes('model b')) score += 3;
-      if (phrase.includes('priming') && lowerText.includes('priming procedure')) score += 4;
-      if (phrase.includes('step') && (lowerText.includes('step') || lowerText.includes('procedure'))) score += 2;
+      if (phrase.includes('model a') && lowerText.includes('model a')) score += 3.5;
+      if (phrase.includes('model b') && lowerText.includes('model b')) score += 3.5;
+      if (phrase.includes('priming') && lowerText.includes('priming procedure')) score += 6;
+      if (phrase.includes('model a') && lowerText.includes('manual priming procedure')) score += 8;
+      if (phrase.includes('step') && (lowerText.includes('step') || lowerText.includes('procedure'))) score += 3;
       if (phrase.includes('spec') && lowerText.includes('specification')) score += 2;
       if (phrase.includes('pressure') && lowerText.includes('pressure')) score += 1.5;
+
+      // Penalize troubleshooting tables when user asks for setup/procedure steps
+      if (isLookingForProcedure && (lowerText.includes('troubleshooting guide') || lowerText.includes('symptompossible causeaction'))) {
+        score -= 8;
+      }
 
       return { ...chunk, score };
     })
@@ -111,32 +129,32 @@ export function rankChunks(
 }
 
 function cleanAndFormatPassage(text: string): string {
-  // 1. Detect procedure step table collisions e.g., "StepAction 1Disconnect... 2Confirm..."
-  if (/StepAction\s*\d/i.test(text) || /\bStep\s*\d+/i.test(text)) {
-    let formatted = text.replace(/StepAction/gi, '').trim();
-    // Split on numbered steps e.g. " 1Disconnect" -> "\n1. Disconnect"
-    formatted = formatted.replace(
-      /(?:^|\s+)(\d{1,2})\s*([A-Z])/g,
-      '\n$1. $2',
+  let cleaned = text;
+
+  // 1. Detect procedure step table collisions e.g., "Step Action 1 Disconnect... 2 Confirm..."
+  if (/Step\s*Action/i.test(cleaned) || /\bStep\s*\d+/i.test(cleaned) || /\b\d\s*[A-Z][a-z]+/i.test(cleaned)) {
+    cleaned = cleaned.replace(/Step\s*Action/gi, '').trim();
+    cleaned = cleaned.replace(
+      /(?:^|\s+)(\d{1,2})\s*([A-Za-z])/g,
+      (_match, num, letter) => `\n${num}. ${letter}`,
     );
-    // Split major warning sections
-    formatted = formatted.replace(
+    cleaned = cleaned.replace(
       /\s*(MODEL [A-Z] STARTUP CHECK|WARNING|CAUTION|IMPORTANT:?)/gi,
-      '\n\n> **$1**:\n',
+      (_m, alert) => `\n\n> **${alert}**:\n`,
     );
-    return formatted.trim();
+    return cleaned.trim();
   }
 
-  // 2. Clean general table collisions e.g., "SymptomPossible causeAction"
-  if (/SymptomPossible causeAction/i.test(text)) {
-    return text
-      .replace(/SymptomPossible causeAction/gi, 'Troubleshooting Guide:\n')
+  // 2. Clean general table collisions e.g., "Symptom Possible cause Action"
+  if (/Symptom\s*Possible\s*cause\s*Action/i.test(cleaned)) {
+    return cleaned
+      .replace(/Symptom\s*Possible\s*cause\s*Action/gi, 'Troubleshooting Guide:\n')
       .replace(/([a-z])([A-Z][a-z])/g, '$1. $2')
       .trim();
   }
 
   // 3. Normalize multiple spaces and preserve sensible paragraph breaks
-  return text.replace(/\s+/g, ' ').trim();
+  return cleaned.replace(/\s+/g, ' ').trim();
 }
 
 export function makeLocalAnswer(

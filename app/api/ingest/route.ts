@@ -29,10 +29,16 @@ function renderPageWithMarker(pageData: PdfPageData) {
       let lastY: number | undefined;
       let text = '';
       for (const item of textContent.items) {
-        if (lastY === item.transform[5] || !lastY) {
-          text += item.str;
+        if (!item.str) continue;
+        if (lastY === undefined || lastY === item.transform[5]) {
+          const needsSpace =
+            text.length > 0 &&
+            !text.endsWith(' ') &&
+            !text.endsWith('\n') &&
+            !item.str.startsWith(' ');
+          text += (needsSpace ? ' ' : '') + item.str;
         } else {
-          text += '\n' + item.str;
+          text += (text.length > 0 && !text.endsWith('\n') ? '\n' : '') + item.str;
         }
         lastY = item.transform[5];
       }
