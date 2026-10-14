@@ -46,7 +46,7 @@ Voxora measures and displays two distinct time intervals directly in the UI:
    - Components:
      - Network roundtrip (client ↔ server): ~30ms
      - Passage ranking (BM25 lexical retrieval): ~2ms
-     - Groq LLM inference (time to first chunk/completion on LLaMA 3.3 70B): ~350ms – 550ms
+     - Groq LLM inference (time to first chunk/completion on Qwen 3.8 27B): ~250ms – 450ms
      - Speech synthesis dispatch: ~5ms – 10ms
      - **Total Question-to-Speech:** **~380ms – 600ms**.
 
@@ -59,15 +59,14 @@ Voxora measures and displays two distinct time intervals directly in the UI:
 - *Reasoning:* PDF parsing and passage chunking run on local Node.js server resources (memory + CPU) without calling paid third-party OCR or embedding APIs.
 
 ### B. Question-Answering Cost (Inference)
-- **Model:** `llama-3.3-70b-versatile` hosted on GroqCloud.
+- **Model:** `qwen/qwen3.8-27b` hosted on GroqCloud (fallback: `openai/gpt-oss-120b`).
 - **Official GroqCloud Published Rates (https://groq.com/pricing):**
-  - Input tokens: **$0.59 per 1,000,000 tokens** ($0.00000059 / token).
-  - Output tokens: **$0.79 per 1,000,000 tokens** ($0.00000079 / token).
-  - Alternative `llama-3.1-8b-instant`: **$0.05 / 1M input**, **$0.08 / 1M output**.
+  - `qwen/qwen3.8-27b`: **$0.20 per 1,000,000 tokens input**, **$0.20 per 1,000,000 tokens output**.
+  - `openai/gpt-oss-120b`: **$0.59 per 1M input**, **$0.79 per 1M output**.
 - **Average Token Consumption per Question:**
-  - System prompt + conversation history + retrieved passages context: ~350–550 input tokens ($0.00021 – $0.00032).
-  - Generated concise spoken answer: ~40–90 output tokens ($0.00003 – $0.00007).
-  - **Estimated Variable Cost per Question:** **~$0.00024 – $0.00039** (< $0.0004).
+  - System prompt + conversation history + retrieved passages context: ~350–550 input tokens ($0.00007 – $0.00011).
+  - Generated concise spoken answer: ~40–90 output tokens ($0.000008 – $0.000018).
+  - **Estimated Variable Cost per Question:** **~$0.00008 – $0.00013** (< $0.00015).
 - **Speech Recognition & Speech Playback:**
   - Browser Web Speech API (`SpeechRecognition` & `SpeechSynthesis`): **$0.00** (client-side native browser engine).
 

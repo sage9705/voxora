@@ -17,7 +17,7 @@
   - Ingestion time measured separately in milliseconds.
   - Question-to-first-audible-answer latency measured directly in the UI.
   - Token consumption and variable cost estimated and displayed per question.
-- **Local Fallback Mode:** Works completely offline in local passage-retrieval mode without any API key, or with Groq (`llama-3.1-8b-instant` / `llama-3.3-70b-versatile` per [Groq Models](https://console.groq.com/docs/models)) for AI synthesis.
+- **Local Fallback Mode:** Works completely offline in local passage-retrieval mode without any API key, or with Groq (`qwen/qwen3.8-27b` / `openai/gpt-oss-120b` per [Groq Models](https://console.groq.com/docs/models)) for AI synthesis.
 
 ---
 
@@ -48,8 +48,8 @@ Then open <http://localhost:3000> in **Brave**, **Google Chrome**, **Microsoft E
 
 ```env
 GROQ_API_KEY=gsk_your_key_here
-GROQ_MODEL=llama-3.1-8b-instant
-# Alternative flagship model: GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=qwen/qwen3.8-27b
+# Alternative permitted model: GROQ_MODEL=openai/gpt-oss-120b
 # See official supported models: https://console.groq.com/docs/models
 ```
 
@@ -85,10 +85,10 @@ Refer to [TEST-QUESTIONS.md](TEST-QUESTIONS.md) for the full rubric.
 ### 3. Variable Cost per Operation
 - **Ingestion:** **$0.00** (Local CPU parsing, no external API calls).
 - **Speech In / Out:** **$0.00** (Native browser Web Speech API).
-- **LLM Reasoning (Groq LLaMA 3.3 70B):**
-  - Input: $0.59 / 1M tokens (~$0.00025 / question)
-  - Output: $0.79 / 1M tokens (~$0.00005 / question)
-  - **Total Variable Cost:** **~$0.0003 per question**.
+- **LLM Reasoning (Groq Qwen 3.8 27B / GPT-OSS 120B):**
+  - Input: $0.20 – $0.59 / 1M tokens (~$0.00010 – $0.00025 / question)
+  - Output: $0.20 – $0.79 / 1M tokens (~$0.00002 – $0.00005 / question)
+  - **Total Variable Cost:** **~$0.0001 – $0.0003 per question**.
   - Local mode: **$0.00**.
 
 ---

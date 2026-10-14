@@ -6,32 +6,33 @@ import type { SourceChunk } from '@/lib/types';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-// Official GroqCloud API Pricing (source: https://console.groq.com/docs/models)
+// Official GroqCloud API Pricing for permitted models (source: https://console.groq.com/docs/models)
 // Rates are strictly measured per 1,000,000 tokens (USD)
 const GROQ_MODEL_PRICING: Record<
   string,
   { inputPerMillion: number; outputPerMillion: number }
 > = {
-  // Meta Llama 3.1 8B Instant: $0.05 input / $0.08 output per 1M tokens
-  'llama-3.1-8b-instant': {
-    inputPerMillion: 0.05,
-    outputPerMillion: 0.08,
+  // Qwen 3.8 27B: $0.20 input / $0.20 output per 1M tokens
+  'qwen/qwen3.8-27b': {
+    inputPerMillion: 0.2,
+    outputPerMillion: 0.2,
   },
-  // Meta Llama 3.3 70B Versatile: $0.59 input / $0.79 output per 1M tokens
-  'llama-3.3-70b-versatile': {
+  // OpenAI GPT-OSS 120B: $0.59 input / $0.79 output per 1M tokens
+  'openai/gpt-oss-120b': {
     inputPerMillion: 0.59,
     outputPerMillion: 0.79,
   },
-  'llama-3.3-70b-specdec': {
-    inputPerMillion: 0.59,
-    outputPerMillion: 0.79,
+  // OpenAI GPT-OSS 20B: $0.15 input / $0.15 output per 1M tokens
+  'openai/gpt-oss-20b': {
+    inputPerMillion: 0.15,
+    outputPerMillion: 0.15,
   },
 };
 
 function getModelPricing(modelName: string) {
   return (
     GROQ_MODEL_PRICING[modelName.toLowerCase()] ??
-    GROQ_MODEL_PRICING['llama-3.1-8b-instant']
+    GROQ_MODEL_PRICING['qwen/qwen3.8-27b']
   );
 }
 
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
     const rawApiKey = process.env.GROQ_API_KEY?.trim().replace(/^["']|["']$/g, '');
     const selectedModel =
       process.env.GROQ_MODEL?.trim().replace(/^["']|["']$/g, '') ||
-      'llama-3.3-70b-versatile';
+      'qwen/qwen3.8-27b';
 
     if (!rawApiKey) {
       const latencyMs = Date.now() - startTime;
@@ -175,10 +176,9 @@ export async function POST(request: Request) {
     const candidateModels = Array.from(
       new Set([
         selectedModel,
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
         'qwen/qwen3.8-27b',
         'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
       ]),
     );
 

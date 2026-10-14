@@ -47,7 +47,7 @@ Evaluated on the included fictional equipment manuals: `NexGen NX-300 Manual v1.
 | **Architecture & Discovery** | Requirements analysis, manual design, tech stack selection (Next.js + Web Speech API) | 1.0 h |
 | **Fictional Manual Creation** | Authored two 5-page technical PDF manuals with setup steps, limits, version differences, and exceptions | 1.5 h |
 | **Ingestion & Retrieval Pipeline** | PDF page extraction, passage chunking, BM25 ranker, and offline fallback | 1.5 h |
-| **LLM Grounding & Prompt Engineering** | Groq LLaMA 3.3 70B integration, anti-hallucination system prompt, and citation grounding | 1.5 h |
+| **LLM Grounding & Prompt Engineering** | Groq Qwen 3.8 27B / GPT-OSS 120B integration, anti-hallucination system prompt, and citation grounding | 1.5 h |
 | **Voice In/Out & Real-Time Metrics** | Speech recognition, text-to-speech synthesis, ingestion timing, and latency/cost telemetry | 1.5 h |
 | **Modularization & Validation** | Component modularization, TypeScript validation, linting, and automated production build | 1.0 h |
 | **Total** | | **8.0 h** |
@@ -56,7 +56,7 @@ Evaluated on the included fictional equipment manuals: `NexGen NX-300 Manual v1.
 
 ## 5. Exact AI Tools and Models Used
 
-- **Primary Reasoning Models:** Meta `llama-3.1-8b-instant` and `llama-3.3-70b-versatile` hosted on GroqCloud LPUs (per official [Groq Models](https://console.groq.com/docs/models)).
+- **Primary Reasoning Models:** `qwen/qwen3.8-27b` and `openai/gpt-oss-120b` hosted on GroqCloud LPUs (per official [Groq Models](https://console.groq.com/docs/models)).
 - **Speech Input & Output:** Dual-engine architecture with universal browser `MediaRecorder` + Groq Whisper (`whisper-large-v3-turbo`) and client Web Speech API (`SpeechRecognition` / `SpeechSynthesis`). Zero proprietary vendor lock-in.
 - **Coding & Development Tools:** Antigravity IDE (DeepMind Agentic Assistant).
 
@@ -74,7 +74,7 @@ Measurements taken on local runtime (Windows 11, Node.js 22, Google Chrome 126):
 | Metric | Measured Range | Description |
 |---|---|---|
 | **Document Ingestion Time ($T_{\text{ingest}}$)** | **16ms – 28ms** | Server-side file receipt, PDF buffer extraction, page boundary tagging, and chunking (5-page PDF). |
-| **Question-to-First-Audible-Answer ($T_{\text{audible}}$)** | **390ms – 560ms** | End-to-end client latency: question submit $\rightarrow$ network roundtrip $\rightarrow$ BM25 retrieval $\rightarrow$ Groq LLaMA 3.3 70B generation $\rightarrow$ speech synthesis dispatch. |
+| **Question-to-First-Audible-Answer ($T_{\text{audible}}$)** | **390ms – 560ms** | End-to-end client latency: question submit $\rightarrow$ network roundtrip $\rightarrow$ BM25 retrieval $\rightarrow$ Groq Qwen 3.8 27B generation $\rightarrow$ speech synthesis dispatch. |
 | **LLM Generation Time** | **280ms – 420ms** | Time to complete generation of concise ~50-word spoken answer on Groq LPU hardware (~300 tokens/sec). |
 
 ---
@@ -84,14 +84,14 @@ Measurements taken on local runtime (Windows 11, Node.js 22, Google Chrome 126):
 ### A. Variable Operating Cost (Per Question & Ingestion)
 
 Based on [GroqCloud Official Pricing](https://groq.com/pricing):
-- **Model:** Meta LLaMA 3.3 70B Versatile
-- **Input Tokens Rate:** $0.59 / 1,000,000 tokens ($0.00000059 / token)
-- **Output Tokens Rate:** $0.79 / 1,000,000 tokens ($0.00000079 / token)
+- **Model:** Qwen 3.8 27B (`qwen/qwen3.8-27b`) / OpenAI GPT-OSS 120B (`openai/gpt-oss-120b`)
+- **Input Tokens Rate:** $0.20 / 1,000,000 tokens ($0.00000020 / token)
+- **Output Tokens Rate:** $0.20 / 1,000,000 tokens ($0.00000020 / token)
 
 #### Average Question Cost Breakdown:
-- **Input:** ~420 tokens (system prompt + history + retrieved passages) = **$0.000248**
-- **Output:** ~65 tokens (concise conversational spoken answer) = **$0.000051**
-- **Total Variable Cost per Question:** **$0.000299 (~$0.0003)**
+- **Input:** ~420 tokens (system prompt + history + retrieved passages) = **$0.000084**
+- **Output:** ~65 tokens (concise conversational spoken answer) = **$0.000013**
+- **Total Variable Cost per Question:** **$0.000097 (~$0.0001)**
 
 #### Other Operations:
 - **Document Ingestion:** **$0.00** (processed locally on server CPU).
