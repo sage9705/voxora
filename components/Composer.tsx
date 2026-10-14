@@ -31,8 +31,13 @@ export function Composer({
   return (
     <div className="composer-wrap">
       <div className="suggested-prompts">
-        {starters.slice(0, 2).map((item) => (
-          <button key={item.label} onClick={() => onAsk(item.question)}>
+        {starters.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            onClick={() => onAsk(item.question)}
+            title={item.question}
+          >
             {item.label} <ArrowUpRight size={12} />
           </button>
         ))}

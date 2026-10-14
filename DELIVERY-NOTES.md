@@ -38,6 +38,14 @@ Evaluated on the included fictional equipment manuals: `NexGen NX-300 Manual v1.
    - *Problem:* Image-based PDFs without embedded text produce empty extraction buffers.
    - *Resolution:* Added validation returning a descriptive HTTP 422 error notifying the user that OCR is not supported and guiding them to use text-based PDFs.
 
+4. **Speech Synthesis Reading Raw Markdown ("Asterisk Asterisk"):**
+   - *Problem:* When LLMs generated structured markdown (e.g. `**bold**`, `*italics*`, `### headings`), browser `SpeechSynthesis` read out the literal characters like "asterisk asterisk" aloud.
+   - *Resolution:* Built a robust markdown stripping preprocessor (`stripMarkdown`) in `useSpeechSynthesis.ts` that removes asterisks, backticks, list markers, and hashes before passing clean conversational text to the speech engine, preserving full formatting on the visual screen.
+
+5. **Cross-Browser Voice Auto-Submit Pause Detection:**
+   - *Problem:* Relying solely on the Web Speech API's `onresult` event for silence detection failed in browsers like Safari and Brave where interim events fire irregularly.
+   - *Resolution:* Integrated the Web Audio API `AnalyserNode` to continuously monitor microphone RMS energy at the hardware signal level. When the user finishes speaking and 2.5 seconds of silence elapse, the question automatically submits hands-free across all browsers.
+
 ---
 
 ## 4. Time Spent Breakdown (~8 Focused Hours)

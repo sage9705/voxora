@@ -1548,6 +1548,14 @@ h1 span {
   display: flex;
   gap: 8px;
   margin: 0 0 11px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.suggested-prompts::-webkit-scrollbar {
+  display: none;
 }
 
 .suggested-prompts button {
@@ -1560,12 +1568,16 @@ h1 span {
   background: transparent;
   color: var(--muted);
   font-size: 12px;
-  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
 }
 
 .suggested-prompts button:hover {
   color: var(--text);
   border-color: var(--line-strong);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
 }
 
 .composer {

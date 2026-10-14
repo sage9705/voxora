@@ -63,7 +63,7 @@ export function WelcomeGrid({
             {uploading ? 'Reading document…' : 'Choose PDF files'}
           </button>
           <span className="file-limit">
-            PDF only <span>·</span> Up to 8 MB per file
+            PDF only <span>·</span> Up to 2 files &amp; 10 pages total <span>·</span> 8 MB limit
           </span>
         </div>
         <div className="upload-footer">

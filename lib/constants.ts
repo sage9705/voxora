@@ -1,15 +1,28 @@
 export const STARTERS = [
   {
-    label: 'Compare versions',
-    question: 'What changed between the two manual versions?',
+    label: '1. Priming Model A',
+    question: 'What are the setup steps for priming Model A?',
   },
   {
-    label: 'Find a specification',
+    label: '2. Compare Model A & B',
+    question:
+      'How do Model A and Model B compare in electrical supply and normal maximum operating pressure in Version 1.0?',
+  },
+  {
+    label: '3. Follow-up: Other model',
+    question: 'And what about the other model?',
+  },
+  {
+    label: '4. 13 bar exception',
+    question: 'When is Model B permitted to operate at 13 bar?',
+  },
+  {
+    label: '5. Motor manufacturer',
+    question: 'Who manufactures the motor for the NX-300?',
+  },
+  {
+    label: '6. Model A pressure (v2.0)',
     question: 'What is the maximum operating pressure for Model A?',
-  },
-  {
-    label: 'Check an exception',
-    question: 'When is Model B allowed to operate at 13 bar?',
   },
 ];
 

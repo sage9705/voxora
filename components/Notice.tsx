@@ -20,7 +20,6 @@ export function Notice({ message, onDismiss, duration }: NoticeProps) {
   useEffect(() => {
     if (!message || isHovered) return;
 
-    // Auto-dismiss after 4 seconds (up to 6.5s for longer text)
     const timeoutDuration = duration ?? Math.max(3800, Math.min(6500, message.length * 45));
 
     const timer = setTimeout(() => {
