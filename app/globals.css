@@ -1050,6 +1050,18 @@ h1 span {
   padding: 13px 16px;
   font-size: 13px;
   line-height: 1.5;
+  animation: noticePop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes noticePop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .notice button {
@@ -1059,6 +1071,15 @@ h1 span {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.notice button:hover {
+  color: var(--text);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
 }
 
 /* Conversation */
