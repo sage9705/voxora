@@ -195,8 +195,8 @@ export function ChatArea({
                             <strong>{source.documentName}</strong>
                             <span>Page {source.page}</span>
                             <p>
-                              {source.excerpt}
-                              {source.excerpt.length >= 260 ? '…' : ''}
+                              &ldquo;{source.excerpt}
+                              {source.excerpt.length >= 260 ? '…' : ''}&rdquo;
                             </p>
                           </div>
                         </div>

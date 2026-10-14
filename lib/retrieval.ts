@@ -1,7 +1,7 @@
 import type { SourceChunk } from './types';
 
 const STOP_WORDS = new Set(
-  'a an and are as at be by for from has have how i in is it of on or that the this to was what when where which who why with can does do did tell me about according document manual version'.split(
+  'a an and are as at be by for from has have how i in is it of on or that the this to was what when where which who why with can does do did tell me about according'.split(
     ' ',
   ),
 );
@@ -105,13 +105,13 @@ export function makeLocalAnswer(
   question: string,
   matches: ReturnType<typeof rankChunks>,
 ): string {
-  if (!matches.length || matches[0].score < 0.1)
-    return "I couldn't find a reliable answer to that question in the documents currently loaded. Try rephrasing it with the product, section, or detail you're looking for.";
+  if (!matches.length || matches[0].score < 0.3)
+    return 'The uploaded documents do not contain information to answer that question.';
   const best = matches.slice(0, 3);
   const lead = best[0].text;
   const supporting = best
     .slice(1)
     .filter((item) => item.text !== lead)
     .map((item) => item.text);
-  return `${lead}${supporting.length ? `\n\nAdditional context: ${supporting.join(' ')}` : ''}\n\nThis is a local retrieval answer based on matching passages, not an AI-generated synthesis.`;
+  return `${lead}${supporting.length ? `\n\nAdditional context: ${supporting.join(' ')}` : ''}\n\n(Local retrieval result grounded in source passages)`;
 }

@@ -28,13 +28,17 @@ type SpeechRecognitionResultEvent = {
   results: ArrayLike<ArrayLike<{ transcript: string }>>;
 };
 
+type SpeechRecognitionErrorEvent = {
+  error: string;
+};
+
 type SpeechRecognitionInstance = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
   onstart: (() => void) | null;
   onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
   start(): void;
   stop(): void;
@@ -129,12 +133,23 @@ export default function Home() {
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || 'Upload failed');
 
-          const newDoc = (data.document || data.documents?.[0]) as DocumentRecord;
-          if (!newDoc) throw new Error('No document record returned.');
+          const returnedDocs: DocumentRecord[] = data.documents?.length
+            ? (data.documents as DocumentRecord[])
+            : data.document
+              ? [data.document as DocumentRecord]
+              : [];
+          if (!returnedDocs.length) throw new Error('No document record returned.');
 
-          setDocuments((current) => [...current, newDoc]);
+          setDocuments((current) => [...current, ...returnedDocs]);
+          const totalPages = returnedDocs.reduce((acc, d) => acc + d.pages, 0);
+          const totalChunks = returnedDocs.reduce(
+            (acc, d) => acc + (d.chunks?.length || 0),
+            0,
+          );
+          const time =
+            data.totalIngestTimeMs ?? returnedDocs[0]?.ingestTimeMs ?? 0;
           setNotice(
-            `${file.name} ingested successfully (${newDoc.pages} pages, ${newDoc.chunks?.length || 0} passages in ${newDoc.ingestTimeMs || 0}ms).`,
+            `${file.name} ingested successfully (${totalPages} ${totalPages === 1 ? 'page' : 'pages'}, ${totalChunks} passages in ${time}ms).`,
           );
         } catch (error) {
           setNotice(
@@ -312,11 +327,19 @@ export default function Home() {
         transcript += event.results[i][0].transcript;
       setQuestion(transcript);
     };
-    instance.onerror = () => {
+    instance.onerror = (event) => {
       setListening(false);
-      setNotice(
-        'I could not hear that clearly. Please try again or type your question.',
-      );
+      if (event.error === 'not-allowed') {
+        setNotice(
+          'Microphone permission was denied. Please allow microphone access in your browser settings to ask by voice.',
+        );
+      } else if (event.error === 'no-speech') {
+        setNotice('No speech was detected. Please try speaking again.');
+      } else {
+        setNotice(
+          'Could not hear clearly. Please try again or type your question.',
+        );
+      }
     };
     instance.onend = () => setListening(false);
     instance.start();
