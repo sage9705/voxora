@@ -82,7 +82,7 @@ export default function Home() {
   }, [clearConversation, cancelSpeech]);
 
   return (
-    <main className="app-shell">
+    <main className="min-h-screen flex bg-bg max-[760px]:block">
       <Sidebar
         documents={documents}
         messages={messages}
@@ -96,7 +96,7 @@ export default function Home() {
         onToggleTheme={() => setDark((v) => !v)}
       />
 
-      <section className="main-panel">
+      <section className="min-w-0 flex-1 flex flex-col">
         <Topbar
           dark={dark}
           onToggleTheme={() => setDark((v) => !v)}
@@ -107,7 +107,7 @@ export default function Home() {
           }
         />
 
-        <div className="workspace-content">
+        <div className="w-[min(1080px,calc(100%-84px))] mx-auto flex-1 flex flex-col max-[1050px]:w-[calc(100%-52px)] max-[760px]:w-[calc(100%-34px)]">
           <PageHeading />
 
           {!documents.length ? (
