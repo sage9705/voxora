@@ -9,7 +9,7 @@ import {
   History,
   Moon,
   Plus,
-  ShieldCheck,
+  LockKeyhole,
   Sun,
   X,
 } from 'lucide-react';
@@ -64,7 +64,7 @@ export function Sidebar({
       </button>
       <div className="side-label">WORKSPACE</div>
       <button className="side-link active">
-        <BookOpen size={17} /> Document chat <span className="tiny-live" />
+        <BookOpen size={17} /> Document chat
       </button>
       <button className="side-link" onClick={onToggleHistory}>
         <History size={17} /> Conversation history{' '}
@@ -139,7 +139,7 @@ export function Sidebar({
       <div className="sidebar-spacer" />
       <div className="privacy-card">
         <div className="privacy-icon">
-          <ShieldCheck size={17} />
+          <LockKeyhole size={16} />
         </div>
         <div>
           <strong>Private by design</strong>
