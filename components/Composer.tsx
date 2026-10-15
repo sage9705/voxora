@@ -6,7 +6,7 @@ import {
   Mic,
   MicOff,
   Send,
-  ShieldCheck,
+  FileCheck2,
 } from 'lucide-react';
 
 type ComposerProps = {
@@ -85,7 +85,7 @@ export function Composer({
           <span className="kbd">↵</span> to ask
         </span>
         <span>
-          <ShieldCheck size={13} /> Answers are grounded in your loaded files
+          <FileCheck2 size={13} /> Answers are grounded in your loaded files
         </span>
       </div>
     </div>
