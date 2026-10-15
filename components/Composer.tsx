@@ -3,6 +3,7 @@
 import {
   MdAutorenew,
   MdFactCheck,
+  MdKeyboardReturn,
   MdMic,
   MdMicOff,
   MdNorthEast,
@@ -52,11 +53,10 @@ export function Composer({
       >
         <button
           type="button"
-          className={`h-9 w-9 flex-[0_0_36px] border-0 rounded-lg grid place-items-center transition-[background,color] duration-150 ${
-            listening
+          className={`h-9 w-9 flex-[0_0_36px] border-0 rounded-lg grid place-items-center transition-[background,color] duration-150 ${listening
               ? 'text-[#ff7979] bg-[#ff79791a] animate-[recordPulse_1.2s_infinite]'
               : 'bg-transparent text-muted hover:bg-panel-soft hover:text-accent'
-          }`}
+            }`}
           onClick={onToggleVoice}
           title={listening ? 'Stop voice input' : 'Ask by voice'}
         >
@@ -87,8 +87,11 @@ export function Composer({
         </button>
       </form>
       <div className="flex items-center justify-between text-[11.5px] max-[760px]:text-[10.5px] text-muted-2 mt-[9px]">
-        <span>
-          <span className="border border-line-strong py-0.5 px-[5px] rounded font-mono text-[11px]">↵</span> to ask
+        <span className="flex items-center gap-1.5">
+          <span className="inline-flex items-center justify-center border border-line-strong py-0.5 px-[5px] rounded text-muted-2">
+            <MdKeyboardReturn size={11} />
+          </span>{' '}
+          to ask
         </span>
         <span className="flex items-center gap-1.5 [&>svg]:text-cyan">
           <MdFactCheck size={14} /> Answers are grounded in your loaded files

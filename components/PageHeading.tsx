@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { AudioLines, FileText } from 'lucide-react';
+import { MdDescription, MdGraphicEq } from 'react-icons/md';
 import gsap from 'gsap';
 
 export function PageHeading() {
@@ -143,14 +143,14 @@ export function PageHeading() {
             ref={cardVoiceRef}
             title="Voice assistance"
           >
-            <AudioLines size={28} />
+            <MdGraphicEq size={32} />
           </div>
           <div
             className="absolute w-[58px] h-[62px] rounded-2xl bg-panel-raised border border-[color-mix(in_srgb,var(--accent)_25%,var(--line-strong))] grid place-items-center shadow-[0_10px_28px_rgba(0,0,0,0.35)] [transform-origin:center_center] [will-change:transform,opacity] text-text"
             ref={cardDocRef}
             title="Document intelligence"
           >
-            <FileText size={26} />
+            <MdDescription size={30} />
           </div>
         </div>
       </div>

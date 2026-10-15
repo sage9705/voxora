@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { AudioLines } from 'lucide-react';
 import {
+  MdBolt,
   MdDeleteOutline,
-  MdHistory,
+  MdForum,
+  MdGraphicEq,
   MdMenuBook,
   MdNorthEast,
   MdPerson,
@@ -235,7 +236,7 @@ export function ChatArea({
             className="h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-muted text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
             onClick={onToggleHistory}
           >
-            <MdHistory size={16} /> History
+            <MdForum size={16} /> History
           </button>
           <button
             className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text transition-colors"
@@ -251,7 +252,7 @@ export function ChatArea({
         {!messages.length ? (
           <div className="max-w-[620px] mx-auto mt-5 mb-0 text-center max-[760px]:mt-3.5">
             <div className="h-14 w-14 grid place-items-center rounded-[18px] border border-line-strong bg-panel-raised text-accent mx-auto mb-4">
-              <AudioLines size={27} />
+              <MdGraphicEq size={30} />
             </div>
             <h2 className="font-heading font-semibold text-[22px] tracking-[-0.7px] mt-0 mb-2.5">
               Let&apos;s find something.
@@ -289,7 +290,7 @@ export function ChatArea({
                   }`}
                 >
                   {message.role === 'assistant' ? (
-                    <AudioLines size={17} />
+                    <MdGraphicEq size={20} />
                   ) : (
                     <MdPerson size={18} />
                   )}
@@ -312,18 +313,18 @@ export function ChatArea({
                         </span>
                         {message.latencyMs !== undefined && (
                           <span
-                            className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted"
+                            className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Processing latency"
                           >
-                            ⚡ {message.latencyMs}ms
+                            <MdBolt size={13} className="text-accent" /> {message.latencyMs}ms
                           </span>
                         )}
                         {message.audioLatencyMs !== undefined && (
                           <span
-                            className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted"
+                            className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Question to first audible answer"
                           >
-                            🔊 {message.audioLatencyMs}ms to audio
+                            <MdVolumeUp size={13} className="text-accent" /> {message.audioLatencyMs}ms to audio
                           </span>
                         )}
                         {message.usage &&
@@ -392,7 +393,7 @@ export function ChatArea({
             {asking && (
               <div className="flex items-start gap-[13px] max-[760px]:gap-2.5">
                 <div className="h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] bg-accent text-accent-ink">
-                  <AudioLines size={17} />
+                  <MdGraphicEq size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="min-h-[26px] flex flex-wrap items-center gap-x-2.5 gap-y-2 mb-1.5">

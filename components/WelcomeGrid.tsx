@@ -10,6 +10,7 @@ import {
   MdMenuBook,
   MdMic,
   MdNorthEast,
+  MdPictureAsPdf,
   MdSearch,
   MdUploadFile,
 } from 'react-icons/md';
@@ -107,8 +108,8 @@ export function WelcomeGrid({
         </p>
         <div className="flex flex-col gap-2 mb-4">
           <div className="flex items-center gap-2.5 border border-line rounded-lg p-[9px_10px] [&>svg]:text-muted-2">
-            <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494] font-mono font-semibold text-[10.5px]">
-              PDF
+            <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494]">
+              <MdPictureAsPdf size={18} />
             </div>
             <div className="flex flex-col gap-[3px] flex-1 text-left">
               <strong className="text-[13px] font-semibold text-text">NX-300 Manual</strong>
@@ -117,8 +118,8 @@ export function WelcomeGrid({
             <MdCheck size={16} />
           </div>
           <div className="flex items-center gap-2.5 border border-line rounded-lg p-[9px_10px] [&>svg]:text-muted-2">
-            <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494] font-mono font-semibold text-[10.5px]">
-              PDF
+            <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494]">
+              <MdPictureAsPdf size={18} />
             </div>
             <div className="flex flex-col gap-[3px] flex-1 text-left">
               <strong className="text-[13px] font-semibold text-text">NX-300 Manual</strong>

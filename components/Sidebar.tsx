@@ -1,16 +1,17 @@
 'use client';
 
-import { AudioLines } from 'lucide-react';
 import {
   MdAdd,
   MdClose,
   MdDarkMode,
   MdDescription,
-  MdHistory,
+  MdForum,
+  MdGraphicEq,
   MdKeyboardArrowDown,
   MdLightMode,
-  MdLockOutline,
   MdMenuBook,
+  MdPictureAsPdf,
+  MdSecurity,
   MdUploadFile,
 } from 'react-icons/md';
 import type { ChatMessage, DocumentRecord } from '@/lib/types';
@@ -50,7 +51,7 @@ export function Sidebar({
     <aside className="w-[var(--sidebar)] flex-[0_0_var(--sidebar)] h-screen sticky top-0 flex flex-col border-r border-line bg-panel pt-[27px] px-4 pb-3.5 z-[5] max-[760px]:relative max-[760px]:w-full max-[760px]:h-auto max-[760px]:p-[14px_16px] max-[760px]:border-r-0 max-[760px]:border-b max-[760px]:grid max-[760px]:grid-cols-[1fr_auto] max-[760px]:gap-x-2.5">
       <div className="flex items-center gap-3 pb-[27px] px-[7px] max-[760px]:p-0 max-[760px]:col-start-1 max-[760px]:row-start-1">
         <div className="h-10 w-10 rounded-xl bg-accent text-accent-ink grid place-items-center shadow-[0_4px_18px_color-mix(in_srgb,var(--accent)_14%,transparent)] max-[760px]:h-9 max-[760px]:w-9">
-          <AudioLines size={22} strokeWidth={2.2} />
+          <MdGraphicEq size={24} />
         </div>
         <div>
           <div className="font-heading font-extrabold text-[23px] tracking-[-1.2px] leading-[1.1] max-[760px]:text-[20px]">
@@ -80,7 +81,7 @@ export function Sidebar({
         className="h-10 flex items-center gap-2.5 px-2.5 text-muted border-0 bg-transparent rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 hover:text-text hover:bg-panel-raised max-[760px]:hidden group w-full"
         onClick={onToggleHistory}
       >
-        <MdHistory size={18} className="text-muted-2 group-hover:text-text" /> Conversation history{' '}
+        <MdForum size={18} className="text-muted-2 group-hover:text-text" /> Conversation history{' '}
         <MdKeyboardArrowDown
           size={18}
           className={`ml-auto transition-transform ${showHistory ? 'rotate-180' : ''}`}
@@ -115,7 +116,7 @@ export function Sidebar({
             key={doc.id}
           >
             <div className="w-8 h-9 flex-[0_0_32px] border border-[color-mix(in_srgb,#f18181_28%,var(--line))] bg-[color-mix(in_srgb,#f18181_9%,var(--panel))] text-[#e99494] grid place-items-center rounded-[6px]">
-              <MdDescription size={19} />
+              <MdPictureAsPdf size={19} />
             </div>
             <div className="min-w-0 flex-1">
               <div
@@ -168,7 +169,7 @@ export function Sidebar({
       <div className="flex-1 min-h-[15px] max-[760px]:hidden" />
       <div className="flex items-start gap-2.5 p-[11px] border border-line rounded-[9px] bg-panel-raised mb-3 max-[760px]:hidden">
         <div className="text-cyan pt-0.5">
-          <MdLockOutline size={17} />
+          <MdSecurity size={18} />
         </div>
         <div>
           <strong className="text-xs font-semibold">Private by design</strong>
