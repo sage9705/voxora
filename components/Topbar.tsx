@@ -17,9 +17,6 @@ export function Topbar({ dark, onToggleTheme, onShowHelp }: TopbarProps) {
         <strong>Document chat</strong>
       </div>
       <div className="topbar-actions">
-        <div className="connection-status">
-          <span /> Workspace ready
-        </div>
         <button
           className="theme-button"
           onClick={onToggleTheme}
