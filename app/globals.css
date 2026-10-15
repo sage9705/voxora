@@ -215,14 +215,6 @@ input:focus-visible {
   color: var(--accent);
 }
 
-.tiny-live {
-  margin-left: auto;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
 .side-end {
   margin-left: auto;
 }
@@ -527,22 +519,6 @@ input:focus-visible {
   gap: 15px;
 }
 
-.connection-status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.connection-status > span {
-  height: 6px;
-  width: 6px;
-  border-radius: 50%;
-  background: #9bd87c;
-  box-shadow: 0 0 0 3px #9bd87c17;
-}
-
 .theme-button,
 .help-button {
   display: flex;
@@ -592,12 +568,6 @@ input:focus-visible {
   color: var(--muted);
 }
 
-.eyebrow-line {
-  height: 1px;
-  width: 21px;
-  background: var(--accent);
-}
-
 h1 {
   font:
     600 clamp(34px, 4.1vw, 48px)/1.14 'Manrope',
@@ -620,72 +590,44 @@ h1 span {
 
 .heading-art {
   position: relative;
-  width: 190px;
-  height: 158px;
-  flex: 0 0 190px;
-  margin-right: 35px;
+  width: 140px;
+  height: 120px;
+  flex: 0 0 140px;
+  margin-right: 25px;
   display: grid;
   place-items: center;
 }
 
-.art-orbit {
+.shuffle-deck {
+  position: relative;
+  width: 60px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+.shuffle-card {
   position: absolute;
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
-  transform: rotate(-28deg);
-}
-
-.orbit-one {
-  width: 155px;
-  height: 80px;
-}
-
-.orbit-two {
-  width: 110px;
-  height: 150px;
-  transform: rotate(42deg);
-  border-color: color-mix(in srgb, var(--purple) 40%, var(--line));
-}
-
-.art-center {
-  width: 68px;
-  height: 68px;
-  border-radius: 22px;
+  width: 58px;
+  height: 62px;
+  border-radius: 16px;
   background: var(--panel-raised);
   border: 1px solid var(--line-strong);
   display: grid;
   place-items: center;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.shuffle-card.card-voice {
   color: var(--accent);
-  box-shadow: 0 0 45px color-mix(in srgb, var(--accent) 9%, transparent);
-  transform: rotate(-8deg);
 }
 
-.art-dot {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
-.dot-one {
-  top: 22px;
-  left: 44px;
-}
-
-.dot-two {
-  right: 17px;
-  top: 59px;
-  background: var(--purple);
-}
-
-.dot-three {
-  bottom: 15px;
-  left: 75px;
-  width: 5px;
-  height: 5px;
-  background: var(--cyan);
+.shuffle-card.card-doc {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--line-strong));
 }
 
 .welcome-grid {
@@ -1785,9 +1727,6 @@ h1 span {
   .topbar {
     height: 52px;
     padding: 0 18px;
-  }
-  .connection-status {
-    display: none;
   }
   .workspace-content {
     width: calc(100% - 34px);
