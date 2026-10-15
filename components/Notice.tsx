@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { MdClose } from 'react-icons/md';
 
 type NoticeProps = {
   message: string;
@@ -45,7 +45,7 @@ export function Notice({ message, onDismiss, duration }: NoticeProps) {
         onClick={onDismiss}
         aria-label="Dismiss message"
       >
-        <X size={14} />
+        <MdClose size={16} />
       </button>
     </div>
   );

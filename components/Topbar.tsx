@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleHelp, Moon, Sun } from 'lucide-react';
+import { MdDarkMode, MdHelpOutline, MdLightMode } from 'react-icons/md';
 
 type TopbarProps = {
   dark: boolean;
@@ -22,13 +22,13 @@ export function Topbar({ dark, onToggleTheme, onShowHelp }: TopbarProps) {
           onClick={onToggleTheme}
           aria-label="Toggle theme"
         >
-          {dark ? <Sun size={17} /> : <Moon size={17} />}
+          {dark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
         </button>
         <button
           className="flex items-center justify-center gap-[7px] border-0 bg-transparent text-muted h-[34px] px-[7px] text-[12.5px] rounded-md transition-[color,background] duration-150 hover:text-text hover:bg-panel-raised"
           onClick={onShowHelp}
         >
-          <CircleHelp size={17} />
+          <MdHelpOutline size={18} />
           <span className="max-[760px]:hidden">Help</span>
         </button>
       </div>

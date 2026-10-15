@@ -2,17 +2,17 @@
 
 import { useState } from 'react';
 import {
-  ArrowUpRight,
-  Check,
-  FileText,
-  FileUp,
-  LoaderCircle,
-  Mic,
-  Plus,
-  BookOpen,
-  Search,
-  Cpu,
-} from 'lucide-react';
+  MdAdd,
+  MdAutorenew,
+  MdCheck,
+  MdDescription,
+  MdMemory,
+  MdMenuBook,
+  MdMic,
+  MdNorthEast,
+  MdSearch,
+  MdUploadFile,
+} from 'react-icons/md';
 
 type WelcomeGridProps = {
   uploading: boolean;
@@ -52,7 +52,7 @@ export function WelcomeGrid({
           }`}
         >
           <div className="w-[52px] h-[52px] border border-line-strong rounded-2xl grid place-items-center text-accent bg-panel-raised mb-4">
-            <FileUp size={25} />
+            <MdUploadFile size={26} />
           </div>
           <h2 className="font-heading font-semibold text-lg tracking-[-0.4px] mt-0 mb-2">
             Bring your documents
@@ -66,9 +66,9 @@ export function WelcomeGrid({
             disabled={uploading}
           >
             {uploading ? (
-              <LoaderCircle size={16} className="animate-spin" />
+              <MdAutorenew size={18} className="animate-spin" />
             ) : (
-              <Plus size={16} />
+              <MdAdd size={18} />
             )}
             {uploading ? 'Reading document…' : 'Choose PDF files'}
           </button>
@@ -78,12 +78,12 @@ export function WelcomeGrid({
         </div>
         <div className="border-t border-line h-12 flex items-center justify-center gap-5 text-muted text-xs">
           <div className="flex items-center gap-[7px] [&>svg]:text-cyan">
-            <Cpu size={16} />
+            <MdMemory size={17} />
             <span>Session-based processing</span>
           </div>
           <span className="h-4 w-px bg-line" />
           <div className="flex items-center gap-[7px] [&>svg]:text-cyan">
-            <FileText size={16} />
+            <MdDescription size={17} />
             <span>Text-based PDFs</span>
           </div>
         </div>
@@ -92,7 +92,7 @@ export function WelcomeGrid({
       <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[300px] max-[760px]:min-h-[290px] p-[22px_21px_16px] max-[1050px]:p-[18px] flex flex-col">
         <div className="flex items-center justify-between mb-[15px]">
           <div className="w-9 h-9 border border-[color-mix(in_srgb,var(--purple)_30%,var(--line))] rounded-[10px] bg-[color-mix(in_srgb,var(--purple)_10%,var(--panel))] text-purple grid place-items-center">
-            <BookOpen size={18} />
+            <MdMenuBook size={19} />
           </div>
           <span className="font-mono font-semibold text-[11px] tracking-[0.8px] text-purple py-[5px] px-2 border border-[color-mix(in_srgb,var(--purple)_30%,var(--line))] rounded-[5px]">
             SAMPLE MANUALS
@@ -114,7 +114,7 @@ export function WelcomeGrid({
               <strong className="text-[13px] font-semibold text-text">NX-300 Manual</strong>
               <span className="text-[11.5px] text-muted">Version 1.0 · March 2024</span>
             </div>
-            <Check size={15} />
+            <MdCheck size={16} />
           </div>
           <div className="flex items-center gap-2.5 border border-line rounded-lg p-[9px_10px] [&>svg]:text-muted-2">
             <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494] font-mono font-semibold text-[10.5px]">
@@ -124,7 +124,7 @@ export function WelcomeGrid({
               <strong className="text-[13px] font-semibold text-text">NX-300 Manual</strong>
               <span className="text-[11.5px] text-muted">Version 2.0 · September 2024</span>
             </div>
-            <Check size={15} />
+            <MdCheck size={16} />
           </div>
         </div>
         <button
@@ -133,9 +133,9 @@ export function WelcomeGrid({
           disabled={uploading}
         >
           {uploading ? (
-            <LoaderCircle size={16} className="animate-spin" />
+            <MdAutorenew size={18} className="animate-spin" />
           ) : (
-            <ArrowUpRight size={16} />
+            <MdNorthEast size={18} />
           )}{' '}
           Load sample documents
         </button>
@@ -146,7 +146,7 @@ export function WelcomeGrid({
 
       <div className="border border-line rounded-[10px] bg-panel flex items-start gap-3 p-4 min-h-[88px] max-[760px]:min-h-[80px]">
         <div className="w-[34px] h-[34px] grid place-items-center rounded-[9px] bg-[color-mix(in_srgb,var(--cyan)_10%,var(--panel))] text-cyan flex-[0_0_34px]">
-          <Mic size={17} />
+          <MdMic size={19} />
         </div>
         <div className="flex-1">
           <strong className="text-[13px] font-semibold">Ask by voice or text</strong>
@@ -160,7 +160,7 @@ export function WelcomeGrid({
 
       <div className="border border-line rounded-[10px] bg-panel flex items-start gap-3 p-4 min-h-[88px] max-[760px]:min-h-[80px]">
         <div className="w-[34px] h-[34px] grid place-items-center rounded-[9px] bg-[color-mix(in_srgb,var(--purple)_10%,var(--panel))] text-purple flex-[0_0_34px]">
-          <Search size={17} />
+          <MdSearch size={19} />
         </div>
         <div className="flex-1">
           <strong className="text-[13px] font-semibold">See where answers came from</strong>

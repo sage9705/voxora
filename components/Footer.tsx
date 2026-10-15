@@ -1,4 +1,4 @@
-import { CircleHelp } from 'lucide-react';
+import { MdHelpOutline } from 'react-icons/md';
 
 interface FooterProps {
   onShowHowItWorks: () => void;
@@ -17,7 +17,7 @@ export function Footer({ onShowHowItWorks }: FooterProps) {
         className="flex items-center gap-1.5 text-muted bg-transparent border-0 font-sans text-xs hover:text-text max-[760px]:ml-auto max-[760px]:text-[11.5px]"
         onClick={onShowHowItWorks}
       >
-        <CircleHelp size={13} /> How it works
+        <MdHelpOutline size={14} /> How it works
       </button>
     </footer>
   );

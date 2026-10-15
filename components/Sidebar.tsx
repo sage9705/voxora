@@ -1,18 +1,18 @@
 'use client';
 
+import { AudioLines } from 'lucide-react';
 import {
-  AudioLines,
-  BookOpen,
-  ChevronDown,
-  FileText,
-  FileUp,
-  History,
-  Moon,
-  Plus,
-  LockKeyhole,
-  Sun,
-  X,
-} from 'lucide-react';
+  MdAdd,
+  MdClose,
+  MdDarkMode,
+  MdDescription,
+  MdHistory,
+  MdKeyboardArrowDown,
+  MdLightMode,
+  MdLockOutline,
+  MdMenuBook,
+  MdUploadFile,
+} from 'react-icons/md';
 import type { ChatMessage, DocumentRecord } from '@/lib/types';
 
 function formatSize(bytes: number) {
@@ -65,7 +65,7 @@ export function Sidebar({
         className="h-11 flex items-center gap-[9px] px-3 border border-line-strong bg-panel-raised rounded-[9px] text-text text-[13.5px] font-semibold text-left transition-[border-color,background] duration-150 hover:border-muted-2 hover:bg-panel-soft max-[760px]:col-start-2 max-[760px]:row-start-1 max-[760px]:self-center max-[760px]:h-[38px] max-[760px]:text-[13px]"
         onClick={onClearConversation}
       >
-        <Plus size={17} /> New conversation{' '}
+        <MdAdd size={19} /> New conversation{' '}
         <span className="ml-auto font-mono text-[11px] text-muted-2 border border-line py-[3px] px-1.5 rounded max-[760px]:hidden">
           ⌘ K
         </span>
@@ -74,15 +74,15 @@ export function Sidebar({
         WORKSPACE
       </div>
       <button className="h-10 flex items-center gap-2.5 px-2.5 text-text font-semibold border-0 bg-[color-mix(in_srgb,var(--accent)_10%,var(--panel))] rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 max-[760px]:hidden">
-        <BookOpen size={17} className="text-accent" /> Document chat
+        <MdMenuBook size={18} className="text-accent" /> Document chat
       </button>
       <button
         className="h-10 flex items-center gap-2.5 px-2.5 text-muted border-0 bg-transparent rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 hover:text-text hover:bg-panel-raised max-[760px]:hidden group w-full"
         onClick={onToggleHistory}
       >
-        <History size={17} className="text-muted-2 group-hover:text-text" /> Conversation history{' '}
-        <ChevronDown
-          size={14}
+        <MdHistory size={18} className="text-muted-2 group-hover:text-text" /> Conversation history{' '}
+        <MdKeyboardArrowDown
+          size={18}
           className={`ml-auto transition-transform ${showHistory ? 'rotate-180' : ''}`}
         />
       </button>
@@ -115,7 +115,7 @@ export function Sidebar({
             key={doc.id}
           >
             <div className="w-8 h-9 flex-[0_0_32px] border border-[color-mix(in_srgb,#f18181_28%,var(--line))] bg-[color-mix(in_srgb,#f18181_9%,var(--panel))] text-[#e99494] grid place-items-center rounded-[6px]">
-              <FileText size={17} />
+              <MdDescription size={19} />
             </div>
             <div className="min-w-0 flex-1">
               <div
@@ -140,14 +140,14 @@ export function Sidebar({
               title="Remove document"
               onClick={() => onRemoveDocument(doc.id, doc.name)}
             >
-              <X size={14} />
+              <MdClose size={16} />
             </button>
           </div>
         ))}
         {!documents.length && (
           <div className="my-[7px] mx-[3px] mb-[9px] border border-dashed border-line-strong rounded-lg py-[18px] px-2.5 text-center">
             <div className="w-9 h-9 grid place-items-center rounded-[10px] bg-panel-soft text-muted mx-auto mb-2.5">
-              <FileUp size={20} />
+              <MdUploadFile size={22} />
             </div>
             <p className="text-[13px] font-semibold m-0 mb-[5px]">
               Your documents live here
@@ -163,12 +163,12 @@ export function Sidebar({
         onClick={onOpenFileInput}
         disabled={uploading}
       >
-        <Plus size={16} /> Add documents
+        <MdAdd size={18} /> Add documents
       </button>
       <div className="flex-1 min-h-[15px] max-[760px]:hidden" />
       <div className="flex items-start gap-2.5 p-[11px] border border-line rounded-[9px] bg-panel-raised mb-3 max-[760px]:hidden">
         <div className="text-cyan pt-0.5">
-          <LockKeyhole size={16} />
+          <MdLockOutline size={17} />
         </div>
         <div>
           <strong className="text-xs font-semibold">Private by design</strong>
@@ -190,7 +190,7 @@ export function Sidebar({
           onClick={onToggleTheme}
           title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
         >
-          {dark ? <Sun size={17} /> : <Moon size={17} />}
+          {dark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
         </button>
       </div>
     </aside>

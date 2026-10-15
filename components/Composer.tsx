@@ -1,13 +1,13 @@
 'use client';
 
 import {
-  ArrowUpRight,
-  LoaderCircle,
-  Mic,
-  MicOff,
-  Send,
-  FileCheck2,
-} from 'lucide-react';
+  MdAutorenew,
+  MdFactCheck,
+  MdMic,
+  MdMicOff,
+  MdNorthEast,
+  MdSend,
+} from 'react-icons/md';
 
 type ComposerProps = {
   question: string;
@@ -39,7 +39,7 @@ export function Composer({
             onClick={() => onAsk(item.question)}
             title={item.question}
           >
-            {item.label} <ArrowUpRight size={12} />
+            {item.label} <MdNorthEast size={13} />
           </button>
         ))}
       </div>
@@ -60,7 +60,7 @@ export function Composer({
           onClick={onToggleVoice}
           title={listening ? 'Stop voice input' : 'Ask by voice'}
         >
-          {listening ? <MicOff size={18} /> : <Mic size={18} />}
+          {listening ? <MdMicOff size={19} /> : <MdMic size={19} />}
         </button>
         <input
           value={question}
@@ -80,9 +80,9 @@ export function Composer({
           aria-label="Send question"
         >
           {asking ? (
-            <LoaderCircle size={17} className="animate-spin" />
+            <MdAutorenew size={18} className="animate-spin" />
           ) : (
-            <Send size={17} />
+            <MdSend size={18} />
           )}
         </button>
       </form>
@@ -91,7 +91,7 @@ export function Composer({
           <span className="border border-line-strong py-0.5 px-[5px] rounded font-mono text-[11px]">↵</span> to ask
         </span>
         <span className="flex items-center gap-1.5 [&>svg]:text-cyan">
-          <FileCheck2 size={13} /> Answers are grounded in your loaded files
+          <MdFactCheck size={14} /> Answers are grounded in your loaded files
         </span>
       </div>
     </div>

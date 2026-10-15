@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { AudioLines } from 'lucide-react';
 import {
-  ArrowUpRight,
-  AudioLines,
-  BookOpen,
-  History,
-  Trash2,
-  User,
-  Volume2,
-} from 'lucide-react';
+  MdDeleteOutline,
+  MdHistory,
+  MdMenuBook,
+  MdNorthEast,
+  MdPerson,
+  MdVolumeUp,
+} from 'react-icons/md';
 import type { ChatMessage } from '@/lib/types';
 
 type ChatAreaProps = {
@@ -208,7 +208,7 @@ export function ChatArea({
       <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-5 max-[760px]:px-3.5">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent">
-            <BookOpen size={17} />
+            <MdMenuBook size={18} />
           </div>
           <div className="flex flex-col gap-1">
             <strong className="text-[13.5px] font-semibold">Document conversation</strong>
@@ -228,21 +228,21 @@ export function ChatArea({
             onClick={onToggleAutoSpeak}
             title={autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'}
           >
-            <Volume2 size={15} />{' '}
+            <MdVolumeUp size={16} />{' '}
             {autoSpeak ? 'Voice answers: On' : 'Voice answers: Off'}
           </button>
           <button
             className="h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-muted text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
             onClick={onToggleHistory}
           >
-            <History size={15} /> History
+            <MdHistory size={16} /> History
           </button>
           <button
             className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text transition-colors"
             onClick={onClearConversation}
             title="Clear conversation"
           >
-            <Trash2 size={16} />
+            <MdDeleteOutline size={18} />
           </button>
         </div>
       </div>
@@ -272,7 +272,7 @@ export function ChatArea({
                   <strong className="text-[13px] leading-[1.5] font-medium max-w-[calc(100%-14px)] max-[760px]:max-w-[90%] max-[760px]:text-[12.5px]">
                     {item.question}
                   </strong>
-                  <ArrowUpRight size={16} className="absolute right-[11px] top-[11px] text-muted-2" />
+                  <MdNorthEast size={16} className="absolute right-[11px] top-[11px] text-muted-2" />
                 </button>
               ))}
             </div>
@@ -291,7 +291,7 @@ export function ChatArea({
                   {message.role === 'assistant' ? (
                     <AudioLines size={17} />
                   ) : (
-                    <User size={16} />
+                    <MdPerson size={18} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -349,11 +349,11 @@ export function ChatArea({
                         className="flex items-center gap-1.5 border-0 bg-transparent p-0 text-muted text-xs transition-colors duration-150 hover:text-accent cursor-pointer"
                         onClick={() => onReadAloud(message.content)}
                       >
-                        <Volume2 size={14} /> Read aloud
+                        <MdVolumeUp size={15} /> Read aloud
                       </button>
                       {message.sources?.length ? (
                         <span className="flex items-center gap-1.5 text-muted text-xs">
-                          <BookOpen size={14} /> {message.sources.length} sources
+                          <MdMenuBook size={15} /> {message.sources.length} sources
                         </span>
                       ) : null}
                     </div>
