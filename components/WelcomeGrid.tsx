@@ -9,9 +9,9 @@ import {
   LoaderCircle,
   Mic,
   Plus,
+  BookOpen,
   Search,
-  ShieldCheck,
-  Sparkles,
+  Cpu,
 } from 'lucide-react';
 
 type WelcomeGridProps = {
@@ -68,7 +68,7 @@ export function WelcomeGrid({
         </div>
         <div className="upload-footer">
           <div className="footer-check">
-            <ShieldCheck size={16} />
+            <Cpu size={16} />
             <span>Session-based processing</span>
           </div>
           <span className="footer-separator" />
@@ -82,9 +82,9 @@ export function WelcomeGrid({
       <div className="sample-card">
         <div className="sample-top">
           <div className="sample-icon">
-            <Sparkles size={19} />
+            <BookOpen size={18} />
           </div>
-          <span className="sample-tag">TRY A DEMO</span>
+          <span className="sample-tag">SAMPLE MANUALS</span>
         </div>
         <h2>Prefer to explore first?</h2>
         <p>
