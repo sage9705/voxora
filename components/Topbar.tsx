@@ -1,14 +1,12 @@
 'use client';
 
-import {
-  MdChat,
-  MdDarkMode,
-  MdHelpOutline,
-  MdLightMode,
-  MdMenuBook,
-  MdVerticalSplit,
-  MdViewSidebar,
-} from 'react-icons/md';
+import Chat from '@mui/icons-material/Chat';
+import DarkMode from '@mui/icons-material/DarkMode';
+import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
+import LightMode from '@mui/icons-material/LightMode';
+import MenuBook from '@mui/icons-material/MenuBook';
+import VerticalSplit from '@mui/icons-material/VerticalSplit';
+import ViewSidebar from '@mui/icons-material/ViewSidebar';
 
 type TopbarProps = {
   dark: boolean;
@@ -43,7 +41,7 @@ export function Topbar({
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label="Toggle sidebar"
           >
-            <MdViewSidebar size={18} />
+            <ViewSidebar style={{ fontSize: 18 }} />
           </button>
         )}
         <div className="flex items-center gap-2 text-[13px] text-muted">
@@ -71,7 +69,7 @@ export function Topbar({
             }`}
             title="Chat only view"
           >
-            <MdChat size={14} />
+            <Chat style={{ fontSize: 14 }} />
             <span>Chat</span>
           </button>
           <button
@@ -83,7 +81,7 @@ export function Topbar({
             }`}
             title="Side-by-side chat and document reader"
           >
-            <MdVerticalSplit size={14} />
+            <VerticalSplit style={{ fontSize: 14 }} />
             <span>Split View</span>
           </button>
           <button
@@ -95,7 +93,7 @@ export function Topbar({
             }`}
             title="Full document reader view"
           >
-            <MdMenuBook size={14} />
+            <MenuBook style={{ fontSize: 14 }} />
             <span>Reader</span>
           </button>
         </div>
@@ -108,13 +106,13 @@ export function Topbar({
           onClick={onToggleTheme}
           aria-label="Toggle theme"
         >
-          {dark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
+          {dark ? <LightMode style={{ fontSize: 18 }} /> : <DarkMode style={{ fontSize: 18 }} />}
         </button>
         <button
           className="flex items-center justify-center gap-[7px] border-0 bg-transparent text-muted h-[34px] px-[7px] text-[12.5px] rounded-md transition-[color,background] duration-150 hover:text-text hover:bg-panel-raised cursor-pointer"
           onClick={onShowHelp}
         >
-          <MdHelpOutline size={18} />
+          <HelpOutline style={{ fontSize: 18 }} />
           <span className="max-[760px]:hidden">Help</span>
         </button>
       </div>
