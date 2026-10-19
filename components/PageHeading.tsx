@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { MdDescription, MdGraphicEq } from 'react-icons/md';
+import Description from '@mui/icons-material/Description';
+import GraphicEq from '@mui/icons-material/GraphicEq';
 import gsap from 'gsap';
 
 export function PageHeading() {
@@ -143,14 +144,14 @@ export function PageHeading() {
             ref={cardVoiceRef}
             title="Voice assistance"
           >
-            <MdGraphicEq size={32} />
+            <GraphicEq style={{ fontSize: 32 }} />
           </div>
           <div
             className="absolute w-[58px] h-[62px] rounded-2xl bg-panel-raised border border-[color-mix(in_srgb,var(--accent)_25%,var(--line-strong))] grid place-items-center shadow-[0_10px_28px_rgba(0,0,0,0.35)] [transform-origin:center_center] [will-change:transform,opacity] text-text"
             ref={cardDocRef}
             title="Document intelligence"
           >
-            <MdDescription size={30} />
+            <Description style={{ fontSize: 30 }} />
           </div>
         </div>
       </div>
