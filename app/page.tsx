@@ -107,7 +107,7 @@ export default function Home() {
           }
         />
 
-        <div className="w-[min(1080px,calc(100%-84px))] mx-auto flex-1 flex flex-col max-[1050px]:w-[calc(100%-52px)] max-[760px]:w-[calc(100%-34px)]">
+        <div className="w-[min(1400px,calc(100%-72px))] mx-auto flex-1 flex flex-col max-[1200px]:w-[calc(100%-48px)] max-[760px]:w-[calc(100%-28px)]">
           <PageHeading />
 
           {!documents.length ? (

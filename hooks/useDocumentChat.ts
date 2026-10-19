@@ -52,15 +52,8 @@ export function useDocumentChat() {
       setNotice('');
 
       for (const file of pdfs) {
-        if (documents.length >= 2) {
-          setNotice(
-            'Scope limit: up to two PDF documents can be active at a time. Remove an existing document first to replace it.',
-          );
-          break;
-        }
-
-        if (file.size > 8 * 1024 * 1024) {
-          setNotice(`${file.name} exceeds the 8 MB upload limit.`);
+        if (file.size > 50 * 1024 * 1024) {
+          setNotice(`${file.name} exceeds the 50 MB upload limit.`);
           continue;
         }
         if (
@@ -89,15 +82,6 @@ export function useDocumentChat() {
 
           if (!returnedDocs.length) {
             throw new Error('No document record returned.');
-          }
-
-          const currentPages = documents.reduce((acc, d) => acc + d.pages, 0);
-          const newDocPages = returnedDocs.reduce((acc, d) => acc + d.pages, 0);
-          if (currentPages + newDocPages > 10) {
-            setNotice(
-              `Scope limit: at most 10 pages total across active documents (current: ${currentPages} pages, ${file.name} is ${newDocPages} pages).`,
-            );
-            continue;
           }
 
           setDocuments((current) => [...current, ...returnedDocs]);

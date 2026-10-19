@@ -71,23 +71,22 @@ export async function POST(request: Request) {
         { error: 'Upload at least one document before asking a question.' },
         { status: 400 },
       );
-    if (question.length > 1200)
+    if (question.length > 4000)
       return NextResponse.json(
-        { error: 'Keep questions under 1,200 characters.' },
+        { error: 'Keep questions under 4,000 characters.' },
         { status: 400 },
       );
     if (
-      chunks.length > 300 ||
       chunks.some(
-        (chunk) => typeof chunk.text !== 'string' || chunk.text.length > 3000,
+        (chunk) => typeof chunk.text !== 'string' || chunk.text.length > 10000,
       )
     )
       return NextResponse.json(
         {
           error:
-            'The document set is too large for this demo. Remove a document and try again.',
+            'Invalid document passage encountered. Please re-upload your document.',
         },
-        { status: 413 },
+        { status: 400 },
       );
 
     // If this is a follow-up question (e.g., "And what about the other model?"),
@@ -100,8 +99,8 @@ export async function POST(request: Request) {
         ? `${lastUserTurn} ${question}`
         : question;
 
-    const matches = rankChunks(retrievalQuery, chunks, 6);
-    const sources = matches.slice(0, 4).map((match) => ({
+    const matches = rankChunks(retrievalQuery, chunks, 8);
+    const sources = matches.slice(0, 6).map((match) => ({
       documentId: match.documentId,
       documentName: match.documentName,
       page: match.page,
@@ -109,7 +108,10 @@ export async function POST(request: Request) {
       relevance: Math.round(match.score * 100) / 100,
     }));
 
-    const rawApiKey = process.env.GROQ_API_KEY?.trim().replace(/^["']|["']$/g, '');
+    const rawApiKey = process.env.GROQ_API_KEY?.trim().replace(
+      /^["']|["']$/g,
+      '',
+    );
     const selectedModel =
       process.env.GROQ_MODEL?.trim().replace(/^["']|["']$/g, '') ||
       'qwen/qwen3.8-27b';
@@ -225,7 +227,10 @@ export async function POST(request: Request) {
         }
       } catch (err) {
         lastError = err;
-        console.warn(`Groq model ${modelToTry} was unavailable, trying next candidate:`, err);
+        console.warn(
+          `Groq model ${modelToTry} was unavailable, trying next candidate:`,
+          err,
+        );
       }
     }
 

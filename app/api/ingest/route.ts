@@ -38,7 +38,8 @@ function renderPageWithMarker(pageData: PdfPageData) {
             !item.str.startsWith(' ');
           text += (needsSpace ? ' ' : '') + item.str;
         } else {
-          text += (text.length > 0 && !text.endsWith('\n') ? '\n' : '') + item.str;
+          text +=
+            (text.length > 0 && !text.endsWith('\n') ? '\n' : '') + item.str;
         }
         lastY = item.transform[5];
       }
@@ -79,9 +80,9 @@ export async function POST(request: Request) {
         );
       }
 
-      if (file.size > 8 * 1024 * 1024) {
+      if (file.size > 50 * 1024 * 1024) {
         return NextResponse.json(
-          { error: `${file.name} exceeds the 8 MB upload limit.` },
+          { error: `${file.name} exceeds the 50 MB upload limit.` },
           { status: 413 },
         );
       }
@@ -135,4 +136,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

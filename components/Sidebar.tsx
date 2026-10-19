@@ -122,7 +122,7 @@ export function Sidebar({
             </div>
             <div className="min-w-0 flex-1">
               <div
-                className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-w-[165px]"
+                className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-w-[195px]"
                 title={doc.name}
               >
                 {doc.name}

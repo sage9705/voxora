@@ -256,9 +256,9 @@ export function ChatArea({
         </div>
       </div>
 
-      <div className="flex-1 min-h-[320px] max-h-[calc(100vh-490px)] overflow-y-auto py-6 px-[25px] max-[1050px]:py-5 max-[1050px]:px-[17px] max-[760px]:max-h-none max-[760px]:py-[18px] max-[760px]:px-3.5">
+      <div className="flex-1 min-h-[360px] max-h-[calc(100vh-360px)] overflow-y-auto py-6 px-[28px] max-[1050px]:py-5 max-[1050px]:px-[17px] max-[760px]:max-h-none max-[760px]:py-[18px] max-[760px]:px-3.5">
         {!messages.length ? (
-          <div className="max-w-[620px] mx-auto mt-5 mb-0 text-center max-[760px]:mt-3.5">
+          <div className="max-w-[860px] mx-auto mt-5 mb-0 text-center max-[760px]:mt-3.5">
             <div className="h-14 w-14 grid place-items-center rounded-[18px] border border-line-strong bg-panel-raised text-accent mx-auto mb-4">
               <MdGraphicEq size={30} />
             </div>
@@ -290,7 +290,7 @@ export function ChatArea({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-[25px] max-w-[800px] mx-auto my-0">
+          <div className="flex flex-col gap-[25px] max-w-[1080px] mx-auto my-0">
             {messages.map((message) => (
               <div
                 className="flex items-start gap-[13px] max-[760px]:gap-2.5"

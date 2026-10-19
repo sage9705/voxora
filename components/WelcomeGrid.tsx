@@ -75,8 +75,8 @@ export function WelcomeGrid({
             {uploading ? 'Reading document…' : 'Choose PDF files'}
           </button>
           <span className="text-[11.5px] text-muted-2 mt-3.5 [&>span]:px-1">
-            PDF only <span>·</span> Up to 2 files &amp; 10 pages total{' '}
-            <span>·</span> 8 MB limit
+            PDF documents <span>·</span> Multi-file &amp; multi-page support{' '}
+            <span>·</span> In-session processing
           </span>
         </div>
         <div className="border-t border-line h-12 flex items-center justify-center gap-5 text-muted text-xs">
