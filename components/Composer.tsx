@@ -45,7 +45,7 @@ export function Composer({
         ))}
       </div>
       <form
-        className="h-[52px] border border-line-strong rounded-[10px] flex items-center gap-2.5 px-2 bg-bg transition-[border-color,box-shadow] duration-200 hover:border-muted-2 focus-within:border-muted focus-within:shadow-[0_2px_12px_rgba(0,0,0,0.3)]"
+        className="h-[52px] border border-line-strong rounded-[10px] flex items-center gap-2.5 px-2 bg-bg transition-all duration-200 hover:border-muted-2 focus-within:border-accent/60 focus-within:ring-1 focus-within:ring-accent/30 focus-within:shadow-[0_0_18px_-2px_color-mix(in_srgb,var(--accent)_18%,transparent),0_2px_8px_rgba(0,0,0,0.25)]"
         onSubmit={(event) => {
           event.preventDefault();
           onAsk(question, listening);
