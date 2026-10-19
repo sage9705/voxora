@@ -1,14 +1,12 @@
 'use client';
 
-import {
-  MdAutorenew,
-  MdFactCheck,
-  MdKeyboardReturn,
-  MdMic,
-  MdMicOff,
-  MdNorthEast,
-  MdSend,
-} from 'react-icons/md';
+import Autorenew from '@mui/icons-material/Autorenew';
+import FactCheck from '@mui/icons-material/FactCheck';
+import KeyboardReturn from '@mui/icons-material/KeyboardReturn';
+import Mic from '@mui/icons-material/Mic';
+import MicOff from '@mui/icons-material/MicOff';
+import NorthEast from '@mui/icons-material/NorthEast';
+import Send from '@mui/icons-material/Send';
 
 type ComposerProps = {
   question: string;
@@ -40,7 +38,7 @@ export function Composer({
             onClick={() => onAsk(item.question)}
             title={item.question}
           >
-            {item.label} <MdNorthEast size={13} />
+            {item.label} <NorthEast style={{ fontSize: 13 }} />
           </button>
         ))}
       </div>
@@ -62,13 +60,13 @@ export function Composer({
           title={listening ? 'Stop voice input' : 'Ask by voice'}
         >
           {listening ? (
-            <MdMicOff
-              size={19}
+            <MicOff
+              style={{ fontSize: 19 }}
               className="transition-transform duration-200 group-hover/mic:scale-110"
             />
           ) : (
-            <MdMic
-              size={19}
+            <Mic
+              style={{ fontSize: 19 }}
               className="transition-transform duration-200 group-hover/mic:scale-110"
             />
           )}
@@ -91,10 +89,10 @@ export function Composer({
           aria-label="Send question"
         >
           {asking ? (
-            <MdAutorenew size={18} className="animate-spin" />
+            <Autorenew style={{ fontSize: 18 }} className="animate-spin" />
           ) : (
-            <MdSend
-              size={18}
+            <Send
+              style={{ fontSize: 18 }}
               className="transition-transform duration-200 group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 group-hover/send:scale-110 group-active/send:translate-x-0 group-active/send:translate-y-0"
             />
           )}
@@ -103,12 +101,12 @@ export function Composer({
       <div className="flex items-center justify-between text-[11.5px] max-[760px]:text-[10.5px] text-muted-2 mt-[9px]">
         <span className="flex items-center gap-1.5">
           <span className="inline-flex items-center justify-center border border-line-strong py-0.5 px-[5px] rounded text-muted-2">
-            <MdKeyboardReturn size={11} />
+            <KeyboardReturn style={{ fontSize: 11 }} />
           </span>{' '}
           to ask
         </span>
         <span className="flex items-center gap-1.5 [&>svg]:text-cyan">
-          <MdFactCheck size={14} /> Answers are grounded in your loaded files
+          <FactCheck style={{ fontSize: 14 }} /> Answers are grounded in your loaded files
         </span>
       </div>
     </div>
