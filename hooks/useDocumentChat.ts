@@ -25,6 +25,26 @@ function generateId(): string {
     : `${Date.now()}-${Math.random()}`;
 }
 
+const SUPPORTED_EXTENSIONS = [
+  '.pdf',
+  '.docx',
+  '.txt',
+  '.md',
+  '.markdown',
+  '.csv',
+  '.xlsx',
+  '.xls',
+];
+
+function isSupportedFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return (
+    SUPPORTED_EXTENSIONS.some((ext) => name.endsWith(ext)) ||
+    file.type === 'application/pdf' ||
+    file.type.startsWith('text/')
+  );
+}
+
 export function useDocumentChat() {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -39,20 +59,18 @@ export function useDocumentChat() {
 
   const uploadFiles = useCallback(
     async (files: FileList | File[]) => {
-      const pdfs = Array.from(files).filter(
-        (file) =>
-          file.type === 'application/pdf' ||
-          file.name.toLowerCase().endsWith('.pdf'),
-      );
-      if (!pdfs.length) {
-        setNotice('Please choose a valid text-based PDF file.');
+      const validFiles = Array.from(files).filter(isSupportedFile);
+      if (!validFiles.length) {
+        setNotice(
+          'Please choose a valid document (PDF, Word .docx, Markdown, Text, CSV, or Excel).',
+        );
         return;
       }
 
       setUploading(true);
       setNotice('');
 
-      for (const file of pdfs) {
+      for (const file of validFiles) {
         if (file.size > 50 * 1024 * 1024) {
           setNotice(`${file.name} exceeds the 50 MB upload limit.`);
           continue;
@@ -99,7 +117,7 @@ export function useDocumentChat() {
           );
         } catch (error) {
           setNotice(
-            error instanceof Error ? error.message : 'Could not read this PDF.',
+            error instanceof Error ? error.message : 'Could not read this document.',
           );
         }
       }
@@ -232,7 +250,7 @@ export function useDocumentChat() {
       if (!trimmed || asking) return;
       if (!chunks.length) {
         setNotice(
-          'Upload your PDF manual or load the sample documents before asking a question.',
+          'Upload your documents or load the sample documents before asking a question.',
         );
         return;
       }
