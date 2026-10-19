@@ -6,6 +6,8 @@ export type SourceChunk = {
   text: string;
 };
 
+export type DocumentFormat = 'pdf' | 'docx' | 'txt' | 'md' | 'csv' | 'xlsx';
+
 export type DocumentRecord = {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export type DocumentRecord = {
   pages: number;
   text: string;
   chunks: SourceChunk[];
+  format?: DocumentFormat;
   suggestedQuestions?: Array<{ label: string; question: string }>;
   addedAt: number;
   ingestTimeMs?: number;
