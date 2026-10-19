@@ -56,6 +56,7 @@ export function Sidebar({
   const [docFilter, setDocFilter] = useState('');
 
   const totalPages = documents.reduce((sum, d) => sum + d.pages, 0);
+  const totalSize = documents.reduce((sum, d) => sum + d.size, 0);
   const filteredDocs = docFilter.trim()
     ? documents.filter((d) =>
         d.name.toLowerCase().includes(docFilter.toLowerCase().trim()),
@@ -121,22 +122,54 @@ export function Sidebar({
           )}
         </div>
       )}
-      <div className="font-mono font-semibold text-[11px] tracking-[1.15px] text-muted-2 pt-[27px] px-2.5 pb-2.5 flex justify-between items-center max-[760px]:hidden">
-        <span className="flex items-center gap-1.5">
-          YOUR LIBRARY{' '}
-          <span className="text-muted text-[10.5px]">
-            ({documents.length.toString().padStart(2, '0')}
-            {totalPages > 0 ? ` · ${totalPages}p` : ''})
-          </span>
-        </span>
-        {documents.length > 1 && onClearAllDocuments && (
-          <button
-            onClick={onClearAllDocuments}
-            className="text-[10.5px] text-muted-2 hover:text-danger bg-transparent border-0 font-sans tracking-normal transition-colors cursor-pointer flex items-center gap-1"
-            title="Remove all documents from workspace"
-          >
-            <MdDeleteSweep size={14} /> Clear all
-          </button>
+      <div className="pt-6 px-1.5 pb-2 max-[760px]:hidden">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono font-semibold text-[11px] tracking-[1.2px] text-muted-2">
+              YOUR LIBRARY
+            </span>
+            {documents.length > 0 && (
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-panel-soft border border-line text-[10px] font-mono text-muted">
+                {documents.length.toString().padStart(2, '0')}
+              </span>
+            )}
+          </div>
+          {documents.length > 0 && onClearAllDocuments && (
+            <button
+              onClick={onClearAllDocuments}
+              className="group/clear inline-flex items-center gap-1 text-[11px] font-medium text-muted-2 hover:text-danger px-1.5 py-0.5 rounded border border-transparent hover:border-danger/20 hover:bg-danger/10 transition-all duration-150 cursor-pointer"
+              title="Remove all documents from workspace"
+            >
+              <MdDeleteSweep
+                size={14}
+                className="group-hover/clear:scale-110 transition-transform duration-150"
+              />
+              <span>Clear all</span>
+            </button>
+          )}
+        </div>
+        {documents.length > 0 && (
+          <div className="flex items-center justify-between text-[11px] text-muted mt-1.5 px-0.5">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+              <span>
+                {documents.length} {documents.length === 1 ? 'file' : 'files'}
+              </span>
+              {totalPages > 0 && (
+                <>
+                  <span className="text-muted-2">·</span>
+                  <span className="font-mono text-[10.5px]">
+                    {totalPages.toLocaleString()} {totalPages === 1 ? 'page' : 'pages'}
+                  </span>
+                </>
+              )}
+            </span>
+            {totalSize > 0 && (
+              <span className="font-mono text-[10px] text-muted-2">
+                {formatSize(totalSize)}
+              </span>
+            )}
+          </div>
         )}
       </div>
       {documents.length > 4 && (
