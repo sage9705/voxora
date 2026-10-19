@@ -1,19 +1,17 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef } from 'react';
-import {
-  MdChevronLeft,
-  MdChevronRight,
-  MdClose,
-  MdFullscreen,
-  MdFullscreenExit,
-  MdPictureAsPdf,
-  MdSearch,
-  MdQuestionAnswer,
-  MdContentCopy,
-  MdCheck,
-} from 'react-icons/md';
+import Check from '@mui/icons-material/Check';
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
+import Close from '@mui/icons-material/Close';
+import ContentCopy from '@mui/icons-material/ContentCopy';
+import Fullscreen from '@mui/icons-material/Fullscreen';
+import FullscreenExit from '@mui/icons-material/FullscreenExit';
+import QuestionAnswer from '@mui/icons-material/QuestionAnswer';
+import Search from '@mui/icons-material/Search';
 import type { DocumentRecord } from '@/lib/types';
+import { DocumentIcon, getFormatBadgeColor } from '@/components/DocumentIcon';
 
 type DocumentViewerProps = {
   documents: DocumentRecord[];
@@ -40,6 +38,7 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
   const currentDoc =
     documents.find((d) => d.id === activeDocumentId) ?? documents[0];
+  const badge = getFormatBadgeColor(currentDoc?.format, currentDoc?.name);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,7 +113,7 @@ export function DocumentViewer({
   if (!currentDoc) {
     return (
       <div className="border border-line bg-panel rounded-xl p-8 text-center text-muted">
-        <MdPictureAsPdf size={32} className="mx-auto mb-2 text-muted-2" />
+        <DocumentIcon size={32} className="mx-auto mb-2 text-muted-2" />
         <p>No document selected</p>
       </div>
     );
@@ -206,9 +205,10 @@ export function DocumentViewer({
                 }`}
                 title={doc.name}
               >
-                <MdPictureAsPdf
+                <DocumentIcon
+                  format={doc.format}
+                  filename={doc.name}
                   size={14}
-                  className={isSelected ? 'text-accent' : 'text-muted-2'}
                 />
                 <span className="max-w-[150px] truncate">{doc.name}</span>
                 <span className="text-[10px] text-muted font-mono">
@@ -230,9 +230,9 @@ export function DocumentViewer({
               }
             >
               {isExpanded ? (
-                <MdFullscreenExit size={17} />
+                <FullscreenExit style={{ fontSize: 17 }} />
               ) : (
-                <MdFullscreen size={17} />
+                <Fullscreen style={{ fontSize: 17 }} />
               )}
             </button>
           )}
@@ -241,7 +241,7 @@ export function DocumentViewer({
             className="p-1 rounded text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer"
             title="Close document viewer"
           >
-            <MdClose size={17} />
+            <Close style={{ fontSize: 17 }} />
           </button>
         </div>
       </div>
@@ -256,7 +256,7 @@ export function DocumentViewer({
             className="p-1 rounded border border-line bg-panel-soft text-muted hover:text-text hover:border-line-strong disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
             title="Previous page"
           >
-            <MdChevronLeft size={16} />
+            <ChevronLeft style={{ fontSize: 16 }} />
           </button>
 
           <div className="flex items-center gap-1 font-mono text-[11.5px] px-1 text-muted">
@@ -283,14 +283,14 @@ export function DocumentViewer({
             className="p-1 rounded border border-line bg-panel-soft text-muted hover:text-text hover:border-line-strong disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
             title="Next page"
           >
-            <MdChevronRight size={16} />
+            <ChevronRight style={{ fontSize: 16 }} />
           </button>
         </div>
 
         {/* Search within document */}
         <div className="flex items-center gap-1.5 flex-1 max-w-[220px]">
           <div className="h-7 w-full flex items-center gap-1.5 px-2 bg-bg border border-line rounded-md text-xs text-muted focus-within:border-accent">
-            <MdSearch size={14} className="text-muted-2 flex-shrink-0" />
+            <Search style={{ fontSize: 14 }} className="text-muted-2 flex-shrink-0" />
             <input
               type="text"
               placeholder="Find on page…"
@@ -303,7 +303,7 @@ export function DocumentViewer({
                 onClick={() => setSearchQuery('')}
                 className="text-muted hover:text-text cursor-pointer"
               >
-                <MdClose size={12} />
+                <Close style={{ fontSize: 12 }} />
               </button>
             )}
           </div>
@@ -355,7 +355,7 @@ export function DocumentViewer({
               className="inline-flex items-center gap-1 text-[11.5px] font-medium text-accent hover:text-accent-ink bg-accent/10 hover:bg-accent border border-accent/20 px-2 py-1 rounded-md transition-all duration-150 cursor-pointer"
               title="Ask AI to analyze this page"
             >
-              <MdQuestionAnswer size={13} />
+              <QuestionAnswer style={{ fontSize: 13 }} />
               <span className="hidden sm:inline">Ask page</span>
             </button>
           )}
@@ -374,6 +374,11 @@ export function DocumentViewer({
               <span className="font-mono font-semibold text-[11px] px-2 py-0.5 rounded bg-panel-soft border border-line text-accent">
                 PAGE {currentPage}
               </span>
+              <span
+                className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded border uppercase font-medium ${badge.bg} ${badge.border} ${badge.text}`}
+              >
+                {badge.label}
+              </span>
               <span className="truncate max-w-[280px] text-muted">
                 {currentDoc.name}
               </span>
@@ -388,12 +393,12 @@ export function DocumentViewer({
             >
               {copiedPage === currentPage ? (
                 <>
-                  <MdCheck size={13} className="text-emerald-400" />
+                  <Check style={{ fontSize: 13 }} className="text-emerald-400" />
                   <span className="text-emerald-400">Copied</span>
                 </>
               ) : (
                 <>
-                  <MdContentCopy size={13} />
+                  <ContentCopy style={{ fontSize: 13 }} />
                   <span>Copy text</span>
                 </>
               )}
