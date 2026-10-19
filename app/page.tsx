@@ -307,7 +307,7 @@ export default function Home() {
       <input
         ref={fileInput}
         type="file"
-        accept="application/pdf,.pdf"
+        accept=".pdf,.docx,.txt,.md,.markdown,.csv,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
         multiple
         hidden
         onChange={(event) => {
