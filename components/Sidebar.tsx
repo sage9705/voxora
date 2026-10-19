@@ -141,7 +141,7 @@ export function Sidebar({
       </div>
       {documents.length > 4 && (
         <div className="px-1 mb-2 max-[760px]:hidden">
-          <div className="h-[30px] flex items-center gap-1.5 px-2 bg-panel-soft border border-line rounded-md text-xs text-muted focus-within:border-accent">
+          <div className="h-[30px] flex items-center gap-1.5 px-2 bg-panel-soft border border-line rounded-md text-xs text-muted transition-colors hover:border-muted-2 focus-within:border-muted">
             <MdSearch size={14} className="text-muted-2" />
             <input
               type="text"

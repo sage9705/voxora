@@ -45,7 +45,7 @@ export function Composer({
         ))}
       </div>
       <form
-        className="h-[52px] border border-line-strong rounded-[10px] flex items-center gap-2.5 px-2 bg-bg transition-[border-color,box-shadow] duration-200 focus-within:border-[color-mix(in_srgb,var(--accent)_60%,var(--line-strong))] focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--accent)_15%,transparent)]"
+        className="h-[52px] border border-line-strong rounded-[10px] flex items-center gap-2.5 px-2 bg-bg transition-[border-color,box-shadow] duration-200 hover:border-muted-2 focus-within:border-muted focus-within:shadow-[0_2px_12px_rgba(0,0,0,0.3)]"
         onSubmit={(event) => {
           event.preventDefault();
           onAsk(question, listening);
@@ -72,7 +72,7 @@ export function Composer({
               : 'Ask a question about your documents…'
           }
           aria-label="Your question"
-          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-text text-[14.5px] h-full placeholder:text-muted-2"
+          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-text text-[14.5px] h-full placeholder:text-muted-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
         />
         <button
           type="submit"
