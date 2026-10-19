@@ -2,12 +2,13 @@
 
 import {
   MdAdd,
+  MdCircle,
   MdClose,
   MdDarkMode,
-  MdDescription,
   MdForum,
   MdGraphicEq,
   MdKeyboardArrowDown,
+  MdKeyboardCommandKey,
   MdLightMode,
   MdMenuBook,
   MdPictureAsPdf,
@@ -67,8 +68,8 @@ export function Sidebar({
         onClick={onClearConversation}
       >
         <MdAdd size={19} /> New conversation{' '}
-        <span className="ml-auto font-mono text-[11px] text-muted-2 border border-line py-[3px] px-1.5 rounded max-[760px]:hidden">
-          ⌘ K
+        <span className="ml-auto font-mono text-[11px] text-muted-2 border border-line py-[3px] px-1.5 rounded max-[760px]:hidden inline-flex items-center gap-1">
+          <MdKeyboardCommandKey size={11} /> K
         </span>
       </button>
       <div className="font-mono font-semibold text-[11px] tracking-[1.15px] text-muted-2 pt-7 px-2.5 pb-2.5 max-[760px]:hidden">
@@ -81,7 +82,8 @@ export function Sidebar({
         className="h-10 flex items-center gap-2.5 px-2.5 text-muted border-0 bg-transparent rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 hover:text-text hover:bg-panel-raised max-[760px]:hidden group w-full"
         onClick={onToggleHistory}
       >
-        <MdForum size={18} className="text-muted-2 group-hover:text-text" /> Conversation history{' '}
+        <MdForum size={18} className="text-muted-2 group-hover:text-text" />{' '}
+        Conversation history{' '}
         <MdKeyboardArrowDown
           size={18}
           className={`ml-auto transition-transform ${showHistory ? 'rotate-180' : ''}`}
@@ -94,7 +96,7 @@ export function Sidebar({
               className="bg-transparent border-0 text-text text-left grid grid-cols-[8px_1fr] gap-x-2 items-center py-2 text-[13px] w-full"
               onClick={onToggleHistory}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" /> Current conversation{' '}
+              <MdCircle size={7} className="text-accent" /> Current conversation{' '}
               <small className="col-start-2 text-muted text-[11.5px] mt-[3px]">
                 {messages.filter((m) => m.role === 'user').length} questions
               </small>
@@ -131,7 +133,8 @@ export function Sidebar({
                 {formatSize(doc.size)}
                 {doc.ingestTimeMs !== undefined && (
                   <>
-                    <span className="px-[3px] text-muted-2">·</span> {doc.ingestTimeMs}ms ingest
+                    <span className="px-[3px] text-muted-2">·</span>{' '}
+                    {doc.ingestTimeMs}ms ingest
                   </>
                 )}
               </div>

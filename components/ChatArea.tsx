@@ -3,12 +3,14 @@
 import { useEffect, useRef } from 'react';
 import {
   MdBolt,
+  MdCircle,
   MdDeleteOutline,
   MdForum,
   MdGraphicEq,
   MdMenuBook,
   MdNorthEast,
   MdPerson,
+  MdToken,
   MdVolumeUp,
 } from 'react-icons/md';
 import type { ChatMessage } from '@/lib/types';
@@ -76,7 +78,8 @@ function parseInline(text: string): React.ReactNode[] {
 function FormattedContent({ content }: { content: string }) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
-  let currentList: { type: 'ol' | 'ul'; items: React.ReactNode[] } | null = null;
+  let currentList: { type: 'ol' | 'ul'; items: React.ReactNode[] } | null =
+    null;
 
   const flushList = () => {
     if (currentList) {
@@ -212,11 +215,12 @@ export function ChatArea({
             <MdMenuBook size={18} />
           </div>
           <div className="flex flex-col gap-1">
-            <strong className="text-[13.5px] font-semibold">Document conversation</strong>
+            <strong className="text-[13.5px] font-semibold">
+              Document conversation
+            </strong>
             <span className="text-xs text-muted max-[760px]:text-[11.5px] flex items-center">
               {documentsCount} {documentsCount === 1 ? 'document' : 'documents'}{' '}
-              in context{' '}
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#9bd87c] mx-1.5" />{' '}
+              in context <MdCircle size={7} className="text-[#9bd87c] mx-1.5" />{' '}
               Ready to ask
             </span>
           </div>
@@ -224,10 +228,14 @@ export function ChatArea({
         <div className="flex items-center gap-2">
           <button
             className={`h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px] ${
-              autoSpeak ? 'border-muted-2 bg-panel-soft text-text' : 'text-muted'
+              autoSpeak
+                ? 'border-muted-2 bg-panel-soft text-text'
+                : 'text-muted'
             }`}
             onClick={onToggleAutoSpeak}
-            title={autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'}
+            title={
+              autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'
+            }
           >
             <MdVolumeUp size={16} />{' '}
             {autoSpeak ? 'Voice answers: On' : 'Voice answers: Off'}
@@ -273,7 +281,10 @@ export function ChatArea({
                   <strong className="text-[13px] leading-[1.5] font-medium max-w-[calc(100%-14px)] max-[760px]:max-w-[90%] max-[760px]:text-[12.5px]">
                     {item.question}
                   </strong>
-                  <MdNorthEast size={16} className="absolute right-[11px] top-[11px] text-muted-2" />
+                  <MdNorthEast
+                    size={16}
+                    className="absolute right-[11px] top-[11px] text-muted-2"
+                  />
                 </button>
               ))}
             </div>
@@ -281,7 +292,10 @@ export function ChatArea({
         ) : (
           <div className="flex flex-col gap-[25px] max-w-[800px] mx-auto my-0">
             {messages.map((message) => (
-              <div className="flex items-start gap-[13px] max-[760px]:gap-2.5" key={message.id}>
+              <div
+                className="flex items-start gap-[13px] max-[760px]:gap-2.5"
+                key={message.id}
+              >
                 <div
                   className={`h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] ${
                     message.role === 'assistant'
@@ -309,14 +323,17 @@ export function ChatArea({
                     {message.role === 'assistant' && (
                       <>
                         <span className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted">
-                          {message.mode === 'local' ? 'Local retrieval' : 'AI grounded'}
+                          {message.mode === 'local'
+                            ? 'Local retrieval'
+                            : 'AI grounded'}
                         </span>
                         {message.latencyMs !== undefined && (
                           <span
                             className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Processing latency"
                           >
-                            <MdBolt size={13} className="text-accent" /> {message.latencyMs}ms
+                            <MdBolt size={13} className="text-accent" />{' '}
+                            {message.latencyMs}ms
                           </span>
                         )}
                         {message.audioLatencyMs !== undefined && (
@@ -324,16 +341,18 @@ export function ChatArea({
                             className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Question to first audible answer"
                           >
-                            <MdVolumeUp size={13} className="text-accent" /> {message.audioLatencyMs}ms to audio
+                            <MdVolumeUp size={13} className="text-accent" />{' '}
+                            {message.audioLatencyMs}ms to audio
                           </span>
                         )}
                         {message.usage &&
                           message.usage.totalTokens !== undefined &&
                           message.usage.totalTokens > 0 && (
                             <span
-                              className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted"
+                              className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                               title={`Prompt: ${message.usage.promptTokens ?? 0}, Completion: ${message.usage.completionTokens ?? 0}`}
                             >
+                              <MdToken size={13} className="text-accent" />
                               {message.usage.totalTokens} tokens · est. $
                               {message.usage.estimatedCostUsd !== undefined
                                 ? message.usage.estimatedCostUsd.toFixed(5)
@@ -354,7 +373,8 @@ export function ChatArea({
                       </button>
                       {message.sources?.length ? (
                         <span className="flex items-center gap-1.5 text-muted text-xs">
-                          <MdMenuBook size={15} /> {message.sources.length} sources
+                          <MdMenuBook size={15} /> {message.sources.length}{' '}
+                          sources
                         </span>
                       ) : null}
                     </div>
@@ -363,7 +383,9 @@ export function ChatArea({
                     <div className="mt-3.5 border border-line rounded-[9px] overflow-hidden bg-panel-raised">
                       <div className="h-[34px] flex items-center justify-between px-3 border-b border-line font-mono font-semibold text-[11px] tracking-[0.7px] text-muted">
                         <span>REFERENCES</span>
-                        <span className="tracking-normal normal-case">{message.sources.length} passages</span>
+                        <span className="tracking-normal normal-case">
+                          {message.sources.length} passages
+                        </span>
                       </div>
                       {message.sources.map((source, index) => (
                         <div
@@ -377,7 +399,9 @@ export function ChatArea({
                             <strong className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-[760px]:whitespace-normal">
                               {source.documentName}
                             </strong>
-                            <span className="text-xs text-muted">Page {source.page}</span>
+                            <span className="text-xs text-muted">
+                              Page {source.page}
+                            </span>
                             <p className="col-span-full text-[13px] leading-[1.6] text-muted mt-[3px] mb-0">
                               &ldquo;{source.excerpt}
                               {source.excerpt.length >= 260 ? '…' : ''}&rdquo;

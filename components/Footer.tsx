@@ -1,4 +1,4 @@
-import { MdHelpOutline } from 'react-icons/md';
+import { MdCircle, MdHelpOutline } from 'react-icons/md';
 
 interface FooterProps {
   onShowHowItWorks: () => void;
@@ -7,8 +7,9 @@ interface FooterProps {
 export function Footer({ onShowHowItWorks }: FooterProps) {
   return (
     <footer className="mt-auto border-t border-line min-h-[52px] flex items-center gap-[18px] text-muted-2 font-mono text-[11.5px] tracking-[0.5px] max-[760px]:text-[10.5px] max-[760px]:gap-2">
-      <span>
-        VOXORA <span className="text-accent text-[8px] px-1">●</span> DOCUMENT INTELLIGENCE
+      <span className="inline-flex items-center">
+        VOXORA <MdCircle size={6} className="text-accent mx-1.5" /> DOCUMENT
+        INTELLIGENCE
       </span>
       <span className="ml-auto font-sans text-xs tracking-normal text-muted max-[760px]:hidden">
         Read less. Understand more.

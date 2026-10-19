@@ -5,6 +5,7 @@ import {
   MdAdd,
   MdAutorenew,
   MdCheck,
+  MdCircle,
   MdDescription,
   MdMemory,
   MdMenuBook,
@@ -74,7 +75,8 @@ export function WelcomeGrid({
             {uploading ? 'Reading document…' : 'Choose PDF files'}
           </button>
           <span className="text-[11.5px] text-muted-2 mt-3.5 [&>span]:px-1">
-            PDF only <span>·</span> Up to 2 files &amp; 10 pages total <span>·</span> 8 MB limit
+            PDF only <span>·</span> Up to 2 files &amp; 10 pages total{' '}
+            <span>·</span> 8 MB limit
           </span>
         </div>
         <div className="border-t border-line h-12 flex items-center justify-center gap-5 text-muted text-xs">
@@ -112,8 +114,12 @@ export function WelcomeGrid({
               <MdPictureAsPdf size={18} />
             </div>
             <div className="flex flex-col gap-[3px] flex-1 text-left">
-              <strong className="text-[13px] font-semibold text-text">NX-300 Manual</strong>
-              <span className="text-[11.5px] text-muted">Version 1.0 · March 2024</span>
+              <strong className="text-[13px] font-semibold text-text">
+                NX-300 Manual
+              </strong>
+              <span className="text-[11.5px] text-muted">
+                Version 1.0 · March 2024
+              </span>
             </div>
             <MdCheck size={16} />
           </div>
@@ -122,8 +128,12 @@ export function WelcomeGrid({
               <MdPictureAsPdf size={18} />
             </div>
             <div className="flex flex-col gap-[3px] flex-1 text-left">
-              <strong className="text-[13px] font-semibold text-text">NX-300 Manual</strong>
-              <span className="text-[11.5px] text-muted">Version 2.0 · September 2024</span>
+              <strong className="text-[13px] font-semibold text-text">
+                NX-300 Manual
+              </strong>
+              <span className="text-[11.5px] text-muted">
+                Version 2.0 · September 2024
+              </span>
             </div>
             <MdCheck size={16} />
           </div>
@@ -141,7 +151,8 @@ export function WelcomeGrid({
           Load sample documents
         </button>
         <div className="text-[11.5px] text-muted-2 flex items-center gap-1.5 mt-3">
-          <span className="w-[5px] h-[5px] rounded-full bg-purple" /> Fictional product data for demonstration
+          <MdCircle size={6} className="text-purple flex-shrink-0" /> Fictional
+          product data for demonstration
         </div>
       </div>
 
@@ -150,7 +161,9 @@ export function WelcomeGrid({
           <MdMic size={19} />
         </div>
         <div className="flex-1">
-          <strong className="text-[13px] font-semibold">Ask by voice or text</strong>
+          <strong className="text-[13px] font-semibold">
+            Ask by voice or text
+          </strong>
           <p className="text-xs leading-[1.55] text-muted mt-1.5 mb-0">
             Speak naturally. Listen to the answer when you need hands-free
             guidance.
@@ -164,7 +177,9 @@ export function WelcomeGrid({
           <MdSearch size={19} />
         </div>
         <div className="flex-1">
-          <strong className="text-[13px] font-semibold">See where answers came from</strong>
+          <strong className="text-[13px] font-semibold">
+            See where answers came from
+          </strong>
           <p className="text-xs leading-[1.55] text-muted mt-1.5 mb-0">
             Every response includes relevant passages and page references when
             available.
