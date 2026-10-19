@@ -1,4 +1,5 @@
-import { MdCircle, MdHelpOutline } from 'react-icons/md';
+import Circle from '@mui/icons-material/Circle';
+import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 
 interface FooterProps {
   onShowHowItWorks: () => void;
@@ -8,17 +9,18 @@ export function Footer({ onShowHowItWorks }: FooterProps) {
   return (
     <footer className="mt-auto border-t border-line min-h-[52px] flex items-center gap-[18px] text-muted-2 font-mono text-[11.5px] tracking-[0.5px] max-[760px]:text-[10.5px] max-[760px]:gap-2">
       <span className="inline-flex items-center">
-        VOXORA <MdCircle size={6} className="text-accent mx-1.5" /> DOCUMENT
-        INTELLIGENCE
+        VOXORA{' '}
+        <Circle style={{ fontSize: 6 }} className="text-accent mx-1.5" />{' '}
+        DOCUMENT INTELLIGENCE
       </span>
       <span className="ml-auto font-sans text-xs tracking-normal text-muted max-[760px]:hidden">
         Read less. Understand more.
       </span>
       <button
-        className="flex items-center gap-1.5 text-muted bg-transparent border-0 font-sans text-xs hover:text-text max-[760px]:ml-auto max-[760px]:text-[11.5px]"
+        className="flex items-center gap-1.5 text-muted bg-transparent border-0 font-sans text-xs hover:text-text max-[760px]:ml-auto max-[760px]:text-[11.5px] cursor-pointer"
         onClick={onShowHowItWorks}
       >
-        <MdHelpOutline size={14} /> How it works
+        <HelpOutline style={{ fontSize: 14 }} /> How it works
       </button>
     </footer>
   );
