@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { AnswerSource, ChatMessage, DocumentRecord } from '@/lib/types';
 import { SAMPLE_DOCUMENTS } from '@/lib/constants';
+import { rankChunks } from '@/lib/retrieval';
 
 type ApiAnswer = {
   answer: string;
@@ -148,6 +149,11 @@ export function useDocumentChat() {
     setNotice(`${name} removed from this session.`);
   }, []);
 
+  const clearAllDocuments = useCallback(() => {
+    setDocuments([]);
+    setNotice('All documents removed from this session.');
+  }, []);
+
   const clearConversation = useCallback(() => {
     setMessages([]);
     setNotice(
@@ -193,10 +199,35 @@ export function useDocumentChat() {
           content: m.content,
         }));
 
+        // Context-aware retrieval query if this is a follow-up turn
+        const lastUserTurn = history
+          .filter((h) => h.role === 'user')
+          .slice(-1)[0]?.content;
+        const retrievalQuery =
+          lastUserTurn && trimmed.length < 50
+            ? `${lastUserTurn} ${trimmed}`
+            : trimmed;
+
+        // Candidate pre-filtering: If there are many chunks across documents,
+        // pre-rank the top 30 most relevant candidates so network payload remains
+        // under 25KB rather than sending megabytes of text across the wire.
+        const candidateMatches =
+          chunks.length > 30 ? rankChunks(retrievalQuery, chunks, 30) : [];
+        const payloadChunks =
+          chunks.length <= 30
+            ? chunks
+            : candidateMatches.length > 0
+              ? candidateMatches
+              : chunks.slice(0, 30);
+
         const response = await fetch('/api/ask', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: trimmed, chunks, history }),
+          body: JSON.stringify({
+            question: trimmed,
+            chunks: payloadChunks,
+            history,
+          }),
         });
         const data = await response.json();
         if (!response.ok) {
@@ -262,6 +293,7 @@ export function useDocumentChat() {
     uploadFiles,
     loadSamples,
     removeDocument,
+    clearAllDocuments,
     clearConversation,
     askQuestion,
   };

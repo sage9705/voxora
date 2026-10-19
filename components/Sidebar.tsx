@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import {
   MdAdd,
   MdCircle,
   MdClose,
   MdDarkMode,
+  MdDeleteSweep,
   MdForum,
   MdGraphicEq,
   MdKeyboardArrowDown,
@@ -12,6 +14,7 @@ import {
   MdLightMode,
   MdMenuBook,
   MdPictureAsPdf,
+  MdSearch,
   MdSecurity,
   MdUploadFile,
 } from 'react-icons/md';
@@ -32,6 +35,7 @@ type SidebarProps = {
   onToggleHistory: () => void;
   onClearConversation: () => void;
   onRemoveDocument: (docId: string, docName: string) => void;
+  onClearAllDocuments?: () => void;
   onOpenFileInput: () => void;
   onToggleTheme: () => void;
 };
@@ -45,9 +49,18 @@ export function Sidebar({
   onToggleHistory,
   onClearConversation,
   onRemoveDocument,
+  onClearAllDocuments,
   onOpenFileInput,
   onToggleTheme,
 }: SidebarProps) {
+  const [docFilter, setDocFilter] = useState('');
+
+  const totalPages = documents.reduce((sum, d) => sum + d.pages, 0);
+  const filteredDocs = docFilter.trim()
+    ? documents.filter((d) =>
+        d.name.toLowerCase().includes(docFilter.toLowerCase().trim()),
+      )
+    : documents;
   return (
     <aside className="w-[var(--sidebar)] flex-[0_0_var(--sidebar)] h-screen sticky top-0 flex flex-col border-r border-line bg-panel pt-[27px] px-4 pb-3.5 z-[5] max-[760px]:relative max-[760px]:w-full max-[760px]:h-auto max-[760px]:p-[14px_16px] max-[760px]:border-r-0 max-[760px]:border-b max-[760px]:grid max-[760px]:grid-cols-[1fr_auto] max-[760px]:gap-x-2.5">
       <div className="flex items-center gap-3 pb-[27px] px-[7px] max-[760px]:p-0 max-[760px]:col-start-1 max-[760px]:row-start-1">
@@ -109,10 +122,48 @@ export function Sidebar({
         </div>
       )}
       <div className="font-mono font-semibold text-[11px] tracking-[1.15px] text-muted-2 pt-[27px] px-2.5 pb-2.5 flex justify-between items-center max-[760px]:hidden">
-        YOUR LIBRARY <span>{documents.length.toString().padStart(2, '0')}</span>
+        <span className="flex items-center gap-1.5">
+          YOUR LIBRARY{' '}
+          <span className="text-muted text-[10.5px]">
+            ({documents.length.toString().padStart(2, '0')}
+            {totalPages > 0 ? ` · ${totalPages}p` : ''})
+          </span>
+        </span>
+        {documents.length > 1 && onClearAllDocuments && (
+          <button
+            onClick={onClearAllDocuments}
+            className="text-[10.5px] text-muted-2 hover:text-danger bg-transparent border-0 font-sans tracking-normal transition-colors cursor-pointer flex items-center gap-1"
+            title="Remove all documents from workspace"
+          >
+            <MdDeleteSweep size={14} /> Clear all
+          </button>
+        )}
       </div>
-      <div className="flex flex-col gap-1 max-[760px]:hidden">
-        {documents.map((doc) => (
+      {documents.length > 4 && (
+        <div className="px-1 mb-2 max-[760px]:hidden">
+          <div className="h-[30px] flex items-center gap-1.5 px-2 bg-panel-soft border border-line rounded-md text-xs text-muted focus-within:border-accent">
+            <MdSearch size={14} className="text-muted-2" />
+            <input
+              type="text"
+              placeholder="Filter documents…"
+              value={docFilter}
+              onChange={(e) => setDocFilter(e.target.value)}
+              className="bg-transparent border-0 outline-none text-text text-[11.5px] w-full placeholder:text-muted-2"
+            />
+            {docFilter && (
+              <button
+                onClick={() => setDocFilter('')}
+                className="bg-transparent border-0 text-muted p-0 hover:text-text cursor-pointer"
+                title="Clear filter"
+              >
+                <MdClose size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      <div className="flex flex-col gap-1 max-[760px]:hidden overflow-y-auto max-h-[calc(100vh-420px)] pr-1">
+        {filteredDocs.map((doc) => (
           <div
             className="flex items-center gap-[9px] py-[9px] px-1.5 rounded-[7px] min-w-0 hover:bg-panel-raised group"
             key={doc.id}
@@ -148,6 +199,11 @@ export function Sidebar({
             </button>
           </div>
         ))}
+        {Boolean(docFilter && !filteredDocs.length) && (
+          <div className="py-4 text-center text-xs text-muted">
+            No documents matching &ldquo;{docFilter}&rdquo;
+          </div>
+        )}
         {!documents.length && (
           <div className="my-[7px] mx-[3px] mb-[9px] border border-dashed border-line-strong rounded-lg py-[18px] px-2.5 text-center">
             <div className="w-9 h-9 grid place-items-center rounded-[10px] bg-panel-soft text-muted mx-auto mb-2.5">
