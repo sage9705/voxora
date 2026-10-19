@@ -13,6 +13,7 @@ export type DocumentRecord = {
   pages: number;
   text: string;
   chunks: SourceChunk[];
+  suggestedQuestions?: Array<{ label: string; question: string }>;
   addedAt: number;
   ingestTimeMs?: number;
 };
@@ -41,4 +42,3 @@ export type ChatMessage = {
     estimatedCostUsd?: number;
   };
 };
-

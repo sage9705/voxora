@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pdf from 'pdf-parse';
+import Groq from 'groq-sdk';
 import { splitIntoChunks } from '@/lib/retrieval';
 import type { DocumentRecord } from '@/lib/types';
 
@@ -106,6 +107,57 @@ export async function POST(request: Request) {
           : `${Date.now()}-${Math.random()}`;
 
       const chunks = splitIntoChunks(text, docId, file.name);
+
+      let suggestedQuestions:
+        Array<{ label: string; question: string }> | undefined;
+      const rawApiKey = process.env.GROQ_API_KEY?.trim().replace(
+        /^["']|["']$/g,
+        '',
+      );
+      const selectedModel =
+        process.env.GROQ_MODEL?.trim().replace(/^["']|["']$/g, '') ||
+        'qwen/qwen3.8-27b';
+
+      if (rawApiKey) {
+        try {
+          const groq = new Groq({ apiKey: rawApiKey });
+          const completion = await groq.chat.completions.create({
+            model: selectedModel,
+            temperature: 0.2,
+            max_tokens: 350,
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an expert document assistant. Given the title and excerpt of an uploaded document, generate 3 to 4 concise, highly relevant questions that a user would naturally ask about this specific document (e.g. for a CV/resume, ask about the candidate\'s background, technical skills, or roles; for a financial or business doc, ask about metrics or summary; for a manual, ask about setup or operation). Return strictly a JSON object with a "questions" key containing an array of objects with "label" (2-3 words) and "question" (the question text).',
+              },
+              {
+                role: 'user',
+                content: `Document Name: ${file.name}\n\nExcerpt:\n${text.slice(0, 3500)}`,
+              },
+            ],
+          });
+
+          const content = completion.choices[0]?.message?.content?.trim();
+          if (content) {
+            const parsedJson = JSON.parse(content);
+            if (Array.isArray(parsedJson.questions)) {
+              suggestedQuestions = parsedJson.questions
+                .filter(
+                  (q: unknown): q is { label: string; question: string } =>
+                    Boolean(q) &&
+                    typeof (q as { label?: unknown }).label === 'string' &&
+                    typeof (q as { question?: unknown }).question === 'string',
+                )
+                .slice(0, 4);
+            }
+          }
+        } catch (aiErr) {
+          console.warn('AI starter generation skipped:', aiErr);
+        }
+      }
+
       const ingestTimeMs = Date.now() - docStartTime;
 
       documents.push({
@@ -115,6 +167,7 @@ export async function POST(request: Request) {
         pages: parsed.numpages || 1,
         text,
         chunks,
+        suggestedQuestions,
         addedAt: Date.now(),
         ingestTimeMs,
       });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerSource, ChatMessage, DocumentRecord } from '@/lib/types';
 import { SAMPLE_DOCUMENTS } from '@/lib/constants';
 import { rankChunks } from '@/lib/retrieval';
@@ -142,6 +142,61 @@ export function useDocumentChat() {
     setNotice(
       'Sample manuals are ready. Try asking what changed between versions or compare Model A and B.',
     );
+  }, [documents]);
+
+  // If custom documents lack suggestedQuestions, fetch AI-extracted questions in background
+  useEffect(() => {
+    const customDocsWithoutStarters = documents.filter(
+      (d) =>
+        (!d.suggestedQuestions || d.suggestedQuestions.length === 0) &&
+        !/nexgen|nx-?300/i.test(d.name),
+    );
+
+    if (!customDocsWithoutStarters.length) return;
+
+    let isMounted = true;
+    void (async () => {
+      try {
+        const payloadDocs = customDocsWithoutStarters.map((d) => ({
+          id: d.id,
+          name: d.name,
+          text: d.text
+            ? d.text.slice(0, 3500)
+            : d.chunks
+                .slice(0, 5)
+                .map((c) => c.text)
+                .join('\n'),
+        }));
+
+        const res = await fetch('/api/starters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ documents: payloadDocs }),
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (
+          isMounted &&
+          Array.isArray(data.questions) &&
+          data.questions.length > 0
+        ) {
+          setDocuments((current) =>
+            current.map((doc) =>
+              customDocsWithoutStarters.some((c) => c.id === doc.id)
+                ? { ...doc, suggestedQuestions: data.questions }
+                : doc,
+            ),
+          );
+        }
+      } catch (err) {
+        console.warn('AI starter questions fetch skipped:', err);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [documents]);
 
   const removeDocument = useCallback((id: string, name: string) => {
