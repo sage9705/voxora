@@ -32,6 +32,7 @@ export default function Home() {
     uploadFiles,
     loadSamples,
     removeDocument,
+    clearAllDocuments,
     clearConversation,
     askQuestion,
   } = useDocumentChat();
@@ -92,6 +93,7 @@ export default function Home() {
         onToggleHistory={() => setShowHistory((v) => !v)}
         onClearConversation={handleClear}
         onRemoveDocument={removeDocument}
+        onClearAllDocuments={clearAllDocuments}
         onOpenFileInput={() => fileInput.current?.click()}
         onToggleTheme={() => setDark((v) => !v)}
       />
