@@ -1,26 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  MdAdd,
-  MdCircle,
-  MdClose,
-  MdChevronLeft,
-  MdChevronRight,
-  MdDarkMode,
-  MdDeleteSweep,
-  MdForum,
-  MdGraphicEq,
-  MdKeyboardArrowDown,
-  MdKeyboardCommandKey,
-  MdLightMode,
-  MdMenuBook,
-  MdPictureAsPdf,
-  MdSearch,
-  MdSecurity,
-  MdUploadFile,
-} from 'react-icons/md';
+import Add from '@mui/icons-material/Add';
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
+import Circle from '@mui/icons-material/Circle';
+import Close from '@mui/icons-material/Close';
+import DarkMode from '@mui/icons-material/DarkMode';
+import DeleteSweep from '@mui/icons-material/DeleteSweep';
+import Forum from '@mui/icons-material/Forum';
+import GraphicEq from '@mui/icons-material/GraphicEq';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardCommandKey from '@mui/icons-material/KeyboardCommandKey';
+import LightMode from '@mui/icons-material/LightMode';
+import MenuBook from '@mui/icons-material/MenuBook';
+import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
+import Search from '@mui/icons-material/Search';
+import Security from '@mui/icons-material/Security';
+import UploadFile from '@mui/icons-material/UploadFile';
 import type { ChatMessage, DocumentRecord } from '@/lib/types';
+import { DocumentIcon, getFormatBadgeColor } from '@/components/DocumentIcon';
 
 function formatSize(bytes: number) {
   return bytes < 1024 * 1024
@@ -80,7 +79,7 @@ export function Sidebar({
           className="h-10 w-10 rounded-xl bg-accent text-accent-ink grid place-items-center shadow-[0_4px_18px_color-mix(in_srgb,var(--accent)_14%,transparent)] hover:scale-105 transition-transform cursor-pointer"
           title="Expand sidebar"
         >
-          <MdGraphicEq size={22} />
+          <GraphicEq style={{ fontSize: 22 }} />
         </button>
 
         <div className="w-8 h-px bg-line my-4" />
@@ -90,7 +89,7 @@ export function Sidebar({
           className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer"
           title="New conversation"
         >
-          <MdAdd size={20} />
+          <Add style={{ fontSize: 20 }} />
         </button>
 
         <button
@@ -102,7 +101,7 @@ export function Sidebar({
               : 'Add documents'
           }
         >
-          <MdPictureAsPdf size={19} />
+          <PictureAsPdf style={{ fontSize: 19 }} />
           {documents.length > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-accent text-accent-ink text-[9px] font-mono font-bold grid place-items-center">
               {documents.length}
@@ -117,7 +116,7 @@ export function Sidebar({
           className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer mb-2"
           title="Expand sidebar"
         >
-          <MdChevronRight size={20} />
+          <ChevronRight style={{ fontSize: 20 }} />
         </button>
 
         <button
@@ -125,7 +124,7 @@ export function Sidebar({
           className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer"
           title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
         >
-          {dark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
+          {dark ? <LightMode style={{ fontSize: 18 }} /> : <DarkMode style={{ fontSize: 18 }} />}
         </button>
       </aside>
     );
@@ -136,7 +135,7 @@ export function Sidebar({
       <div className="flex items-center justify-between pb-[27px] px-[7px] max-[760px]:p-0 max-[760px]:col-start-1 max-[760px]:row-start-1">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-accent text-accent-ink grid place-items-center shadow-[0_4px_18px_color-mix(in_srgb,var(--accent)_14%,transparent)] max-[760px]:h-9 max-[760px]:w-9">
-            <MdGraphicEq size={24} />
+            <GraphicEq style={{ fontSize: 24 }} />
           </div>
           <div>
             <div className="font-heading font-extrabold text-[23px] tracking-[-1.2px] leading-[1.1] max-[760px]:text-[20px]">
@@ -153,7 +152,7 @@ export function Sidebar({
             className="p-1 rounded text-muted-2 hover:text-text hover:bg-panel-soft transition-colors cursor-pointer max-[760px]:hidden"
             title="Collapse sidebar to expand workspace"
           >
-            <MdChevronLeft size={18} />
+            <ChevronLeft style={{ fontSize: 18 }} />
           </button>
         )}
       </div>
@@ -161,25 +160,25 @@ export function Sidebar({
         className="h-11 flex items-center gap-[9px] px-3 border border-line-strong bg-panel-raised rounded-[9px] text-text text-[13.5px] font-semibold text-left transition-[border-color,background] duration-150 hover:border-muted-2 hover:bg-panel-soft max-[760px]:col-start-2 max-[760px]:row-start-1 max-[760px]:self-center max-[760px]:h-[38px] max-[760px]:text-[13px]"
         onClick={onClearConversation}
       >
-        <MdAdd size={19} /> New conversation{' '}
+        <Add style={{ fontSize: 19 }} /> New conversation{' '}
         <span className="ml-auto font-mono text-[11px] text-muted-2 border border-line py-[3px] px-1.5 rounded max-[760px]:hidden inline-flex items-center gap-1">
-          <MdKeyboardCommandKey size={11} /> K
+          <KeyboardCommandKey style={{ fontSize: 11 }} /> K
         </span>
       </button>
       <div className="font-mono font-semibold text-[11px] tracking-[1.15px] text-muted-2 pt-7 px-2.5 pb-2.5 max-[760px]:hidden">
         WORKSPACE
       </div>
       <button className="h-10 flex items-center gap-2.5 px-2.5 text-text font-semibold border-0 bg-[color-mix(in_srgb,var(--accent)_10%,var(--panel))] rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 max-[760px]:hidden">
-        <MdMenuBook size={18} className="text-accent" /> Document chat
+        <MenuBook style={{ fontSize: 18 }} className="text-accent" /> Document chat
       </button>
       <button
         className="h-10 flex items-center gap-2.5 px-2.5 text-muted border-0 bg-transparent rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 hover:text-text hover:bg-panel-raised max-[760px]:hidden group w-full"
         onClick={onToggleHistory}
       >
-        <MdForum size={18} className="text-muted-2 group-hover:text-text" />{' '}
+        <Forum style={{ fontSize: 18 }} className="text-muted-2 group-hover:text-text" />{' '}
         Conversation history{' '}
-        <MdKeyboardArrowDown
-          size={18}
+        <KeyboardArrowDown
+          style={{ fontSize: 18 }}
           className={`ml-auto transition-transform ${showHistory ? 'rotate-180' : ''}`}
         />
       </button>
@@ -190,7 +189,7 @@ export function Sidebar({
               className="bg-transparent border-0 text-text text-left grid grid-cols-[8px_1fr] gap-x-2 items-center py-2 text-[13px] w-full"
               onClick={onToggleHistory}
             >
-              <MdCircle size={7} className="text-accent" /> Current conversation{' '}
+              <Circle style={{ fontSize: 7 }} className="text-accent" /> Current conversation{' '}
               <small className="col-start-2 text-muted text-[11.5px] mt-[3px]">
                 {messages.filter((m) => m.role === 'user').length} questions
               </small>
@@ -220,8 +219,8 @@ export function Sidebar({
               className="group/clear inline-flex items-center gap-1 text-[11px] font-medium text-muted-2 hover:text-danger px-1.5 py-0.5 rounded border border-transparent hover:border-danger/20 hover:bg-danger/10 transition-all duration-150 cursor-pointer"
               title="Remove all documents from workspace"
             >
-              <MdDeleteSweep
-                size={14}
+              <DeleteSweep
+                style={{ fontSize: 14 }}
                 className="group-hover/clear:scale-110 transition-transform duration-150"
               />
               <span>Clear all</span>
@@ -255,7 +254,7 @@ export function Sidebar({
       {documents.length > 4 && (
         <div className="px-1 mb-2 max-[760px]:hidden">
           <div className="h-[30px] flex items-center gap-1.5 px-2 bg-panel-soft border border-line rounded-md text-xs text-muted transition-colors hover:border-muted-2 focus-within:border-muted">
-            <MdSearch size={14} className="text-muted-2" />
+            <Search style={{ fontSize: 14 }} className="text-muted-2" />
             <input
               type="text"
               placeholder="Filter documents…"
@@ -269,7 +268,7 @@ export function Sidebar({
                 className="bg-transparent border-0 text-muted p-0 hover:text-text cursor-pointer"
                 title="Clear filter"
               >
-                <MdClose size={12} />
+                <Close style={{ fontSize: 12 }} />
               </button>
             )}
           </div>
@@ -278,6 +277,7 @@ export function Sidebar({
       <div className="flex flex-col gap-1 max-[760px]:hidden overflow-y-auto max-h-[calc(100vh-420px)] pr-1">
         {filteredDocs.map((doc) => {
           const isSelected = selectedDocumentId === doc.id;
+          const badge = getFormatBadgeColor(doc.format, doc.name);
           return (
             <div
               className={`flex items-center gap-[9px] py-[9px] px-2 rounded-[7px] min-w-0 transition-colors cursor-pointer group ${
@@ -290,33 +290,34 @@ export function Sidebar({
               title={`Click to open ${doc.name} in reader`}
             >
               <div
-                className={`w-8 h-9 flex-[0_0_32px] border rounded-[6px] grid place-items-center ${
+                className={`w-8 h-9 flex-[0_0_32px] border rounded-[6px] grid place-items-center transition-colors ${
                   isSelected
                     ? 'border-accent/40 bg-accent/15 text-accent'
-                    : 'border-[color-mix(in_srgb,#f18181_28%,var(--line))] bg-[color-mix(in_srgb,#f18181_9%,var(--panel))] text-[#e99494]'
+                    : `${badge.border} ${badge.bg}`
                 }`}
               >
-                <MdPictureAsPdf size={19} />
+                <DocumentIcon format={doc.format} filename={doc.name} size={18} />
               </div>
               <div className="min-w-0 flex-1">
                 <div
-                  className={`text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-w-[195px] ${
+                  className={`text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-w-[195px] flex items-center gap-1.5 ${
                     isSelected ? 'text-text' : ''
                   }`}
                   title={doc.name}
                 >
-                  {doc.name}
+                  <span className="truncate">{doc.name}</span>
                 </div>
-                <div className="text-[11.5px] text-muted mt-[3px]">
-                  {doc.pages} {doc.pages === 1 ? 'page' : 'pages'}{' '}
-                  <span className="px-[3px] text-muted-2">·</span>{' '}
-                  {formatSize(doc.size)}
-                  {doc.ingestTimeMs !== undefined && (
-                    <>
-                      <span className="px-[3px] text-muted-2">·</span>{' '}
-                      {doc.ingestTimeMs}ms ingest
-                    </>
-                  )}
+                <div className="text-[11px] text-muted mt-[3px] flex items-center gap-1">
+                  <span
+                    className={`text-[9.5px] font-mono px-1 py-0.2 rounded border uppercase font-medium ${badge.bg} ${badge.border} ${badge.text}`}
+                  >
+                    {badge.label}
+                  </span>
+                  <span>
+                    {doc.pages} {doc.pages === 1 ? 'page' : 'pages'}
+                  </span>
+                  <span className="px-[2px] text-muted-2">·</span>
+                  <span>{formatSize(doc.size)}</span>
                 </div>
               </div>
               <button
@@ -327,7 +328,7 @@ export function Sidebar({
                   onRemoveDocument(doc.id, doc.name);
                 }}
               >
-                <MdClose size={16} />
+                <Close style={{ fontSize: 16 }} />
               </button>
             </div>
           );
@@ -340,13 +341,13 @@ export function Sidebar({
         {!documents.length && (
           <div className="my-[7px] mx-[3px] mb-[9px] border border-dashed border-line-strong rounded-lg py-[18px] px-2.5 text-center">
             <div className="w-9 h-9 grid place-items-center rounded-[10px] bg-panel-soft text-muted mx-auto mb-2.5">
-              <MdUploadFile size={22} />
+              <UploadFile style={{ fontSize: 22 }} />
             </div>
             <p className="text-[13px] font-semibold m-0 mb-[5px]">
               Your documents live here
             </p>
             <span className="text-xs text-muted leading-[1.5] block">
-              Add a PDF to start asking questions.
+              Add documents to start asking questions.
             </span>
           </div>
         )}
@@ -356,12 +357,12 @@ export function Sidebar({
         onClick={onOpenFileInput}
         disabled={uploading}
       >
-        <MdAdd size={18} /> Add documents
+        <Add style={{ fontSize: 18 }} /> Add documents
       </button>
       <div className="flex-1 min-h-[15px] max-[760px]:hidden" />
       <div className="flex items-start gap-2.5 p-[11px] border border-line rounded-[9px] bg-panel-raised mb-3 max-[760px]:hidden">
         <div className="text-cyan pt-0.5">
-          <MdSecurity size={18} />
+          <Security style={{ fontSize: 18 }} />
         </div>
         <div>
           <strong className="text-xs font-semibold">Private by design</strong>
@@ -383,7 +384,7 @@ export function Sidebar({
           onClick={onToggleTheme}
           title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
         >
-          {dark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
+          {dark ? <LightMode style={{ fontSize: 18 }} /> : <DarkMode style={{ fontSize: 18 }} />}
         </button>
       </div>
     </aside>
