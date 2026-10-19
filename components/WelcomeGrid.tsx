@@ -1,20 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  MdAdd,
-  MdAutorenew,
-  MdCheck,
-  MdCircle,
-  MdDescription,
-  MdMemory,
-  MdMenuBook,
-  MdMic,
-  MdNorthEast,
-  MdPictureAsPdf,
-  MdSearch,
-  MdUploadFile,
-} from 'react-icons/md';
+import Add from '@mui/icons-material/Add';
+import Autorenew from '@mui/icons-material/Autorenew';
+import Check from '@mui/icons-material/Check';
+import Circle from '@mui/icons-material/Circle';
+import Description from '@mui/icons-material/Description';
+import Memory from '@mui/icons-material/Memory';
+import MenuBook from '@mui/icons-material/MenuBook';
+import Mic from '@mui/icons-material/Mic';
+import NorthEast from '@mui/icons-material/NorthEast';
+import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
+import Search from '@mui/icons-material/Search';
+import UploadFile from '@mui/icons-material/UploadFile';
 
 type WelcomeGridProps = {
   uploading: boolean;
@@ -54,13 +52,13 @@ export function WelcomeGrid({
           }`}
         >
           <div className="w-[52px] h-[52px] border border-line-strong rounded-2xl grid place-items-center text-accent bg-panel-raised mb-4">
-            <MdUploadFile size={26} />
+            <UploadFile style={{ fontSize: 26 }} />
           </div>
           <h2 className="font-heading font-semibold text-lg tracking-[-0.4px] mt-0 mb-2">
             Bring your documents
           </h2>
           <p className="text-[13.5px] text-muted leading-[1.6] mt-0 mb-[18px]">
-            Drop your PDFs here, or browse your computer.
+            Drop your PDFs, Word, Markdown, Text, or Sheets here.
           </p>
           <button
             className="h-[42px] rounded-lg flex items-center justify-center gap-2 px-4 text-[13.5px] font-bold transition-[transform,background,filter] duration-150 bg-accent text-accent-ink border border-accent hover:brightness-[1.06] hover:-translate-y-px disabled:opacity-65 disabled:cursor-not-allowed"
@@ -68,26 +66,26 @@ export function WelcomeGrid({
             disabled={uploading}
           >
             {uploading ? (
-              <MdAutorenew size={18} className="animate-spin" />
+              <Autorenew style={{ fontSize: 18 }} className="animate-spin" />
             ) : (
-              <MdAdd size={18} />
+              <Add style={{ fontSize: 18 }} />
             )}
-            {uploading ? 'Reading document…' : 'Choose PDF files'}
+            {uploading ? 'Reading documents…' : 'Choose files'}
           </button>
           <span className="text-[11.5px] text-muted-2 mt-3.5 [&>span]:px-1">
-            PDF documents <span>·</span> Multi-file &amp; multi-page support{' '}
+            PDF, Word, TXT, MD, CSV &amp; Excel <span>·</span> Multi-file support{' '}
             <span>·</span> In-session processing
           </span>
         </div>
         <div className="border-t border-line h-12 flex items-center justify-center gap-5 text-muted text-xs">
           <div className="flex items-center gap-[7px] [&>svg]:text-cyan">
-            <MdMemory size={17} />
+            <Memory style={{ fontSize: 17 }} />
             <span>Session-based processing</span>
           </div>
           <span className="h-4 w-px bg-line" />
           <div className="flex items-center gap-[7px] [&>svg]:text-cyan">
-            <MdDescription size={17} />
-            <span>Text-based PDFs</span>
+            <Description style={{ fontSize: 17 }} />
+            <span>Multi-format intelligence</span>
           </div>
         </div>
       </div>
@@ -95,7 +93,7 @@ export function WelcomeGrid({
       <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[300px] max-[760px]:min-h-[290px] p-[22px_21px_16px] max-[1050px]:p-[18px] flex flex-col">
         <div className="flex items-center justify-between mb-[15px]">
           <div className="w-9 h-9 border border-[color-mix(in_srgb,var(--purple)_30%,var(--line))] rounded-[10px] bg-[color-mix(in_srgb,var(--purple)_10%,var(--panel))] text-purple grid place-items-center">
-            <MdMenuBook size={19} />
+            <MenuBook style={{ fontSize: 19 }} />
           </div>
           <span className="font-mono font-semibold text-[11px] tracking-[0.8px] text-purple py-[5px] px-2 border border-[color-mix(in_srgb,var(--purple)_30%,var(--line))] rounded-[5px]">
             SAMPLE MANUALS
@@ -111,7 +109,7 @@ export function WelcomeGrid({
         <div className="flex flex-col gap-2 mb-4">
           <div className="flex items-center gap-2.5 border border-line rounded-lg p-[9px_10px] [&>svg]:text-muted-2">
             <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494]">
-              <MdPictureAsPdf size={18} />
+              <PictureAsPdf style={{ fontSize: 18 }} />
             </div>
             <div className="flex flex-col gap-[3px] flex-1 text-left">
               <strong className="text-[13px] font-semibold text-text">
@@ -121,11 +119,11 @@ export function WelcomeGrid({
                 Version 1.0 · March 2024
               </span>
             </div>
-            <MdCheck size={16} />
+            <Check style={{ fontSize: 16 }} />
           </div>
           <div className="flex items-center gap-2.5 border border-line rounded-lg p-[9px_10px] [&>svg]:text-muted-2">
             <div className="h-[30px] w-[30px] rounded-[6px] grid place-items-center bg-[#ee8b8b16] text-[#e99494]">
-              <MdPictureAsPdf size={18} />
+              <PictureAsPdf style={{ fontSize: 18 }} />
             </div>
             <div className="flex flex-col gap-[3px] flex-1 text-left">
               <strong className="text-[13px] font-semibold text-text">
@@ -135,7 +133,7 @@ export function WelcomeGrid({
                 Version 2.0 · September 2024
               </span>
             </div>
-            <MdCheck size={16} />
+            <Check style={{ fontSize: 16 }} />
           </div>
         </div>
         <button
@@ -144,21 +142,21 @@ export function WelcomeGrid({
           disabled={uploading}
         >
           {uploading ? (
-            <MdAutorenew size={18} className="animate-spin" />
+            <Autorenew style={{ fontSize: 18 }} className="animate-spin" />
           ) : (
-            <MdNorthEast size={18} />
+            <NorthEast style={{ fontSize: 18 }} />
           )}{' '}
           Load sample documents
         </button>
         <div className="text-[11.5px] text-muted-2 flex items-center gap-1.5 mt-3">
-          <MdCircle size={6} className="text-purple flex-shrink-0" /> Fictional
+          <Circle style={{ fontSize: 6 }} className="text-purple flex-shrink-0" /> Fictional
           product data for demonstration
         </div>
       </div>
 
       <div className="border border-line rounded-[10px] bg-panel flex items-start gap-3 p-4 min-h-[88px] max-[760px]:min-h-[80px]">
         <div className="w-[34px] h-[34px] grid place-items-center rounded-[9px] bg-[color-mix(in_srgb,var(--cyan)_10%,var(--panel))] text-cyan flex-[0_0_34px]">
-          <MdMic size={19} />
+          <Mic style={{ fontSize: 19 }} />
         </div>
         <div className="flex-1">
           <strong className="text-[13px] font-semibold">
@@ -174,7 +172,7 @@ export function WelcomeGrid({
 
       <div className="border border-line rounded-[10px] bg-panel flex items-start gap-3 p-4 min-h-[88px] max-[760px]:min-h-[80px]">
         <div className="w-[34px] h-[34px] grid place-items-center rounded-[9px] bg-[color-mix(in_srgb,var(--purple)_10%,var(--panel))] text-purple flex-[0_0_34px]">
-          <MdSearch size={19} />
+          <Search style={{ fontSize: 19 }} />
         </div>
         <div className="flex-1">
           <strong className="text-[13px] font-semibold">
