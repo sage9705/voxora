@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MdClose } from 'react-icons/md';
+import Close from '@mui/icons-material/Close';
 
 type NoticeProps = {
   message: string;
@@ -45,7 +45,7 @@ export function Notice({ message, onDismiss, duration }: NoticeProps) {
         onClick={onDismiss}
         aria-label="Dismiss message"
       >
-        <MdClose size={16} />
+        <Close style={{ fontSize: 16 }} />
       </button>
     </div>
   );
