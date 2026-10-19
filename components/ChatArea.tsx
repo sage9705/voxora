@@ -268,10 +268,10 @@ export function ChatArea({
             <p className="text-sm text-muted mt-0 mb-6">
               Ask a question about your documents or start with one of these.
             </p>
-            <div className="grid grid-cols-3 gap-[11px] text-left max-[760px]:grid-cols-1">
+            <div className="grid grid-cols-3 gap-[11px] text-left max-[1050px]:grid-cols-2 max-[760px]:grid-cols-1">
               {starters.map((item) => (
                 <button
-                  key={item.label}
+                  key={`${item.label}-${item.question}`}
                   className="relative min-h-[104px] py-3.5 px-[13px] border border-line bg-panel-raised rounded-[9px] text-text text-left flex flex-col gap-2.5 transition-[border-color,transform] duration-150 hover:border-line-strong hover:-translate-y-px max-[760px]:min-h-[68px] max-[760px]:gap-2"
                   onClick={() => onSelectStarter(item.question)}
                 >

@@ -34,7 +34,7 @@ export function Composer({
       <div className="flex gap-2 mb-[11px] overflow-x-auto no-scrollbar pb-0.5 [touch-action:pan-x]">
         {starters.map((item) => (
           <button
-            key={item.label}
+            key={`${item.label}-${item.question}`}
             type="button"
             className="flex items-center gap-1.5 py-1.5 px-[11px] border border-line rounded-md bg-transparent text-muted text-xs max-[760px]:text-[11.5px] whitespace-nowrap flex-shrink-0 cursor-pointer transition-[color,border-color,background-color] duration-150 hover:text-text hover:border-line-strong hover:bg-white/5"
             onClick={() => onAsk(item.question)}
@@ -53,10 +53,11 @@ export function Composer({
       >
         <button
           type="button"
-          className={`h-9 w-9 flex-[0_0_36px] border-0 rounded-lg grid place-items-center transition-[background,color] duration-150 ${listening
+          className={`h-9 w-9 flex-[0_0_36px] border-0 rounded-lg grid place-items-center transition-[background,color] duration-150 ${
+            listening
               ? 'text-[#ff7979] bg-[#ff79791a] animate-[recordPulse_1.2s_infinite]'
               : 'bg-transparent text-muted hover:bg-panel-soft hover:text-accent'
-            }`}
+          }`}
           onClick={onToggleVoice}
           title={listening ? 'Stop voice input' : 'Ask by voice'}
         >

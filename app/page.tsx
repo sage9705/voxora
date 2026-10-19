@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
 import { WelcomeGrid } from '@/components/WelcomeGrid';
@@ -12,7 +12,7 @@ import { Footer } from '@/components/Footer';
 import { useDocumentChat } from '@/hooks/useDocumentChat';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
-import { STARTERS } from '@/lib/constants';
+import { getDynamicStarters } from '@/lib/starters';
 
 export default function Home() {
   const [question, setQuestion] = useState('');
@@ -35,6 +35,8 @@ export default function Home() {
     clearConversation,
     askQuestion,
   } = useDocumentChat();
+
+  const starters = useMemo(() => getDynamicStarters(documents), [documents]);
 
   const handleAskRef = useRef<(text: string, fromVoice: boolean) => void>(
     () => {},
@@ -123,7 +125,7 @@ export default function Home() {
               messages={messages}
               asking={asking}
               autoSpeak={autoSpeak}
-              starters={STARTERS}
+              starters={starters}
               onToggleAutoSpeak={() => setAutoSpeak((v) => !v)}
               onToggleHistory={() => setShowHistory((v) => !v)}
               onClearConversation={handleClear}
@@ -135,7 +137,7 @@ export default function Home() {
                 setQuestion={setQuestion}
                 asking={asking}
                 listening={listening}
-                starters={STARTERS}
+                starters={starters}
                 onAsk={(q, fromVoice) => handleAsk(q, fromVoice)}
                 onToggleVoice={toggleVoice}
               />
