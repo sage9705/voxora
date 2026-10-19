@@ -53,15 +53,25 @@ export function Composer({
       >
         <button
           type="button"
-          className={`h-9 w-9 flex-[0_0_36px] border-0 rounded-lg grid place-items-center transition-[background,color] duration-150 ${
+          className={`group/mic h-9 w-9 flex-[0_0_36px] rounded-lg grid place-items-center transition-all duration-200 cursor-pointer ${
             listening
-              ? 'text-[#ff7979] bg-[#ff79791a] animate-[recordPulse_1.2s_infinite]'
-              : 'bg-transparent text-muted hover:bg-panel-soft hover:text-accent'
+              ? 'text-[#ff7979] bg-[#ff79791a] border border-[#ff797933] animate-[recordPulse_1.2s_infinite] hover:bg-[#ff797926] hover:scale-105 active:scale-95'
+              : 'border border-transparent bg-transparent text-muted hover:text-accent hover:bg-panel-soft hover:border-line hover:shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95'
           }`}
           onClick={onToggleVoice}
           title={listening ? 'Stop voice input' : 'Ask by voice'}
         >
-          {listening ? <MdMicOff size={19} /> : <MdMic size={19} />}
+          {listening ? (
+            <MdMicOff
+              size={19}
+              className="transition-transform duration-200 group-hover/mic:scale-110"
+            />
+          ) : (
+            <MdMic
+              size={19}
+              className="transition-transform duration-200 group-hover/mic:scale-110"
+            />
+          )}
         </button>
         <input
           value={question}
@@ -76,14 +86,17 @@ export function Composer({
         />
         <button
           type="submit"
-          className="h-9 w-[38px] flex-[0_0_38px] grid place-items-center border-0 rounded-lg bg-accent text-accent-ink transition-[filter,transform] duration-150 hover:not-disabled:brightness-105 hover:not-disabled:-translate-y-px disabled:bg-panel-soft disabled:text-muted-2 disabled:cursor-not-allowed"
+          className="group/send h-9 w-[38px] flex-[0_0_38px] grid place-items-center border-0 rounded-lg bg-accent text-accent-ink transition-all duration-200 hover:not-disabled:brightness-110 hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_16px_color-mix(in_srgb,var(--accent)_40%,transparent)] active:not-disabled:translate-y-0 active:not-disabled:scale-95 disabled:bg-panel-soft disabled:text-muted-2 disabled:cursor-not-allowed disabled:shadow-none"
           disabled={!question.trim() || asking}
           aria-label="Send question"
         >
           {asking ? (
             <MdAutorenew size={18} className="animate-spin" />
           ) : (
-            <MdSend size={18} />
+            <MdSend
+              size={18}
+              className="transition-transform duration-200 group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 group-hover/send:scale-110 group-active/send:translate-x-0 group-active/send:translate-y-0"
+            />
           )}
         </button>
       </form>
