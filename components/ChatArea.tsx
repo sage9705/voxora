@@ -11,6 +11,7 @@ import {
   MdNorthEast,
   MdPerson,
   MdToken,
+  MdVerticalSplit,
   MdVolumeUp,
 } from 'react-icons/md';
 import type { ChatMessage } from '@/lib/types';
@@ -26,10 +27,16 @@ type ChatAreaProps = {
   onClearConversation: () => void;
   onSelectStarter: (question: string) => void;
   onReadAloud: (text: string) => void;
+  onViewSource?: (documentId: string, page: number, excerpt?: string) => void;
+  onToggleSplitView?: () => void;
+  splitViewActive?: boolean;
   children?: React.ReactNode;
 };
 
-function parseInline(text: string): React.ReactNode[] {
+function parseInline(
+  text: string,
+  onPageClick?: (page: number) => void,
+): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const regex = /(\*\*[^*]+\*\*|\[Page\s*\d+\]|`[^`]+`)/g;
   let lastIdx = 0;
@@ -47,13 +54,22 @@ function parseInline(text: string): React.ReactNode[] {
         </strong>,
       );
     } else if (token.startsWith('[Page') && token.endsWith(']')) {
+      const pageMatch = token.match(/\d+/);
+      const pageNum = pageMatch ? parseInt(pageMatch[0], 10) : undefined;
       parts.push(
-        <span
-          className="inline-block py-px px-1.5 text-[11px] rounded bg-panel-raised border border-line-strong text-accent my-0 mx-[3px] font-mono"
+        <button
+          type="button"
           key={match.index}
+          onClick={() => pageNum && onPageClick?.(pageNum)}
+          className="inline-flex items-center py-px px-1.5 text-[11px] rounded bg-panel-raised border border-line-strong text-accent my-0 mx-[3px] font-mono hover:bg-accent hover:text-accent-ink transition-colors cursor-pointer"
+          title={
+            pageNum
+              ? `Jump to Page ${pageNum} in document reader`
+              : undefined
+          }
         >
           {token.slice(1, -1)}
-        </span>,
+        </button>,
       );
     } else if (token.startsWith('`') && token.endsWith('`')) {
       parts.push(
@@ -75,7 +91,13 @@ function parseInline(text: string): React.ReactNode[] {
   return parts.length ? parts : [text];
 }
 
-function FormattedContent({ content }: { content: string }) {
+function FormattedContent({
+  content,
+  onPageClick,
+}: {
+  content: string;
+  onPageClick?: (page: number) => void;
+}) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
   let currentList: { type: 'ol' | 'ul'; items: React.ReactNode[] } | null =
@@ -103,7 +125,7 @@ function FormattedContent({ content }: { content: string }) {
             {currentList.items.map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
-          </ul>,
+          </ul>
         );
       }
       currentList = null;
@@ -126,7 +148,7 @@ function FormattedContent({ content }: { content: string }) {
         flushList();
         currentList = { type: 'ol', items: [] };
       }
-      currentList.items.push(parseInline(numMatch[2]));
+      currentList.items.push(parseInline(numMatch[2], onPageClick));
       continue;
     }
 
@@ -137,7 +159,7 @@ function FormattedContent({ content }: { content: string }) {
         flushList();
         currentList = { type: 'ul', items: [] };
       }
-      currentList.items.push(parseInline(bulletMatch[1]));
+      currentList.items.push(parseInline(bulletMatch[1], onPageClick));
       continue;
     }
 
@@ -151,7 +173,7 @@ function FormattedContent({ content }: { content: string }) {
           key={`q-${i}`}
           className="my-2.5 mx-0 mb-3 py-2.5 px-3.5 border-l-[3px] border-accent bg-panel-raised rounded-r-[7px] text-text text-sm"
         >
-          {parseInline(quoteText)}
+          {parseInline(quoteText, onPageClick)}
         </blockquote>,
       );
       continue;
@@ -165,7 +187,7 @@ function FormattedContent({ content }: { content: string }) {
           key={`h-${i}`}
           className="text-[15px] font-bold my-3.5 mb-1.5 text-text tracking-[-0.2px] first:mt-0"
         >
-          {parseInline(headingText)}
+          {parseInline(headingText, onPageClick)}
         </h4>,
       );
       continue;
@@ -174,7 +196,7 @@ function FormattedContent({ content }: { content: string }) {
     // Normal paragraph
     elements.push(
       <p key={`p-${i}`} className="mt-0 mb-2.5 last:mb-0">
-        {parseInline(trimmed)}
+        {parseInline(trimmed, onPageClick)}
       </p>,
     );
   }
@@ -199,6 +221,9 @@ export function ChatArea({
   onClearConversation,
   onSelectStarter,
   onReadAloud,
+  onViewSource,
+  onToggleSplitView,
+  splitViewActive,
   children,
 }: ChatAreaProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -208,7 +233,7 @@ export function ChatArea({
   }, [messages, asking]);
 
   return (
-    <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[480px] flex flex-col flex-1 mb-[25px] max-[760px]:min-h-[500px] max-[760px]:mb-4">
+    <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[480px] flex flex-col flex-1 mb-[25px] max-[760px]:min-h-[500px] max-[760px]:mb-4 transition-all">
       <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-5 max-[760px]:px-3.5">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent">
@@ -226,6 +251,26 @@ export function ChatArea({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {documentsCount > 0 && onToggleSplitView && (
+            <button
+              className={`h-[33px] flex items-center gap-1.5 border rounded-md text-xs px-2.5 transition-all duration-150 cursor-pointer ${
+                splitViewActive
+                  ? 'border-accent/50 bg-accent/15 text-accent font-semibold shadow-sm'
+                  : 'border-transparent bg-transparent text-muted hover:border-muted-2 hover:bg-panel-soft hover:text-text'
+              }`}
+              onClick={onToggleSplitView}
+              title={
+                splitViewActive
+                  ? 'Close side-by-side reader'
+                  : 'Open document side-by-side'
+              }
+            >
+              <MdVerticalSplit size={16} />{' '}
+              <span className="max-[760px]:hidden">
+                {splitViewActive ? 'Hide reader' : 'View document'}
+              </span>
+            </button>
+          )}
           <button
             className={`h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px] ${
               autoSpeak
@@ -362,7 +407,10 @@ export function ChatArea({
                       </>
                     )}
                   </div>
-                  <FormattedContent content={message.content} />
+                  <FormattedContent
+                    content={message.content}
+                    onPageClick={(page) => onViewSource?.('', page)}
+                  />
                   {message.role === 'assistant' && (
                     <div className="flex items-center gap-3.5 mt-2.5">
                       <button
@@ -389,17 +437,31 @@ export function ChatArea({
                       </div>
                       {message.sources.map((source, index) => (
                         <div
-                          className="flex gap-2.5 py-[11px] px-3 border-b border-line last:border-b-0"
+                          className="flex gap-2.5 py-[11px] px-3 border-b border-line last:border-b-0 hover:bg-panel-soft transition-colors cursor-pointer group/ref"
                           key={`${source.documentId}-${source.page}-${index}`}
+                          onClick={() =>
+                            onViewSource?.(
+                              source.documentId,
+                              source.page,
+                              source.excerpt,
+                            )
+                          }
+                          title="Click to view and highlight in document reader"
                         >
-                          <div className="h-[22px] w-[22px] flex-[0_0_22px] grid place-items-center border border-line-strong rounded-[5px] font-mono font-semibold text-[11px] text-accent">
+                          <div className="h-[22px] w-[22px] flex-[0_0_22px] grid place-items-center border border-line-strong rounded-[5px] font-mono font-semibold text-[11px] text-accent group-hover/ref:bg-accent group-hover/ref:text-accent-ink transition-colors">
                             {index + 1}
                           </div>
                           <div className="min-w-0 flex-1 grid grid-cols-[minmax(0,1fr)_auto] gap-x-2.5 gap-y-1">
-                            <strong className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-[760px]:whitespace-normal">
-                              {source.documentName}
-                            </strong>
-                            <span className="text-xs text-muted">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <strong className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-[760px]:whitespace-normal group-hover/ref:text-accent transition-colors">
+                                {source.documentName}
+                              </strong>
+                              <MdNorthEast
+                                size={13}
+                                className="text-muted-2 group-hover/ref:text-accent opacity-0 group-hover/ref:opacity-100 transition-opacity"
+                              />
+                            </div>
+                            <span className="text-xs text-muted font-mono">
                               Page {source.page}
                             </span>
                             <p className="col-span-full text-[13px] leading-[1.6] text-muted mt-[3px] mb-0">

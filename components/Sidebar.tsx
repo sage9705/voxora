@@ -5,6 +5,8 @@ import {
   MdAdd,
   MdCircle,
   MdClose,
+  MdChevronLeft,
+  MdChevronRight,
   MdDarkMode,
   MdDeleteSweep,
   MdForum,
@@ -38,6 +40,10 @@ type SidebarProps = {
   onClearAllDocuments?: () => void;
   onOpenFileInput: () => void;
   onToggleTheme: () => void;
+  selectedDocumentId?: string;
+  onSelectDocument?: (docId: string) => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
 export function Sidebar({
@@ -52,6 +58,10 @@ export function Sidebar({
   onClearAllDocuments,
   onOpenFileInput,
   onToggleTheme,
+  selectedDocumentId,
+  onSelectDocument,
+  collapsed = false,
+  onToggleCollapse,
 }: SidebarProps) {
   const [docFilter, setDocFilter] = useState('');
 
@@ -62,20 +72,90 @@ export function Sidebar({
         d.name.toLowerCase().includes(docFilter.toLowerCase().trim()),
       )
     : documents;
+  if (collapsed) {
+    return (
+      <aside className="w-[60px] flex-[0_0_60px] h-screen sticky top-0 flex flex-col items-center border-r border-line bg-panel py-5 z-[5] max-[760px]:hidden transition-all duration-200">
+        <button
+          onClick={onToggleCollapse}
+          className="h-10 w-10 rounded-xl bg-accent text-accent-ink grid place-items-center shadow-[0_4px_18px_color-mix(in_srgb,var(--accent)_14%,transparent)] hover:scale-105 transition-transform cursor-pointer"
+          title="Expand sidebar"
+        >
+          <MdGraphicEq size={22} />
+        </button>
+
+        <div className="w-8 h-px bg-line my-4" />
+
+        <button
+          onClick={onClearConversation}
+          className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer"
+          title="New conversation"
+        >
+          <MdAdd size={20} />
+        </button>
+
+        <button
+          onClick={onOpenFileInput}
+          className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer mt-1 relative"
+          title={
+            documents.length
+              ? `${documents.length} documents loaded · Add more`
+              : 'Add documents'
+          }
+        >
+          <MdPictureAsPdf size={19} />
+          {documents.length > 0 && (
+            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-accent text-accent-ink text-[9px] font-mono font-bold grid place-items-center">
+              {documents.length}
+            </span>
+          )}
+        </button>
+
+        <div className="flex-1" />
+
+        <button
+          onClick={onToggleCollapse}
+          className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer mb-2"
+          title="Expand sidebar"
+        >
+          <MdChevronRight size={20} />
+        </button>
+
+        <button
+          onClick={onToggleTheme}
+          className="w-10 h-10 rounded-lg grid place-items-center text-muted hover:text-text hover:bg-panel-soft transition-colors cursor-pointer"
+          title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
+        >
+          {dark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
+        </button>
+      </aside>
+    );
+  }
+
   return (
-    <aside className="w-[var(--sidebar)] flex-[0_0_var(--sidebar)] h-screen sticky top-0 flex flex-col border-r border-line bg-panel pt-[27px] px-4 pb-3.5 z-[5] max-[760px]:relative max-[760px]:w-full max-[760px]:h-auto max-[760px]:p-[14px_16px] max-[760px]:border-r-0 max-[760px]:border-b max-[760px]:grid max-[760px]:grid-cols-[1fr_auto] max-[760px]:gap-x-2.5">
-      <div className="flex items-center gap-3 pb-[27px] px-[7px] max-[760px]:p-0 max-[760px]:col-start-1 max-[760px]:row-start-1">
-        <div className="h-10 w-10 rounded-xl bg-accent text-accent-ink grid place-items-center shadow-[0_4px_18px_color-mix(in_srgb,var(--accent)_14%,transparent)] max-[760px]:h-9 max-[760px]:w-9">
-          <MdGraphicEq size={24} />
-        </div>
-        <div>
-          <div className="font-heading font-extrabold text-[23px] tracking-[-1.2px] leading-[1.1] max-[760px]:text-[20px]">
-            voxora<span className="text-accent">.</span>
+    <aside className="w-[var(--sidebar)] flex-[0_0_var(--sidebar)] h-screen sticky top-0 flex flex-col border-r border-line bg-panel pt-[27px] px-4 pb-3.5 z-[5] max-[760px]:relative max-[760px]:w-full max-[760px]:h-auto max-[760px]:p-[14px_16px] max-[760px]:border-r-0 max-[760px]:border-b max-[760px]:grid max-[760px]:grid-cols-[1fr_auto] max-[760px]:gap-x-2.5 transition-all duration-200">
+      <div className="flex items-center justify-between pb-[27px] px-[7px] max-[760px]:p-0 max-[760px]:col-start-1 max-[760px]:row-start-1">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-accent text-accent-ink grid place-items-center shadow-[0_4px_18px_color-mix(in_srgb,var(--accent)_14%,transparent)] max-[760px]:h-9 max-[760px]:w-9">
+            <MdGraphicEq size={24} />
           </div>
-          <div className="font-mono font-semibold text-[10.5px] tracking-[1.2px] text-muted mt-1 max-[760px]:text-[10px]">
-            DOCUMENT INTELLIGENCE
+          <div>
+            <div className="font-heading font-extrabold text-[23px] tracking-[-1.2px] leading-[1.1] max-[760px]:text-[20px]">
+              voxora<span className="text-accent">.</span>
+            </div>
+            <div className="font-mono font-semibold text-[10.5px] tracking-[1.2px] text-muted mt-1 max-[760px]:text-[10px]">
+              DOCUMENT INTELLIGENCE
+            </div>
           </div>
         </div>
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className="p-1 rounded text-muted-2 hover:text-text hover:bg-panel-soft transition-colors cursor-pointer max-[760px]:hidden"
+            title="Collapse sidebar to expand workspace"
+          >
+            <MdChevronLeft size={18} />
+          </button>
+        )}
       </div>
       <button
         className="h-11 flex items-center gap-[9px] px-3 border border-line-strong bg-panel-raised rounded-[9px] text-text text-[13.5px] font-semibold text-left transition-[border-color,background] duration-150 hover:border-muted-2 hover:bg-panel-soft max-[760px]:col-start-2 max-[760px]:row-start-1 max-[760px]:self-center max-[760px]:h-[38px] max-[760px]:text-[13px]"
@@ -196,42 +276,62 @@ export function Sidebar({
         </div>
       )}
       <div className="flex flex-col gap-1 max-[760px]:hidden overflow-y-auto max-h-[calc(100vh-420px)] pr-1">
-        {filteredDocs.map((doc) => (
-          <div
-            className="flex items-center gap-[9px] py-[9px] px-1.5 rounded-[7px] min-w-0 hover:bg-panel-raised group"
-            key={doc.id}
-          >
-            <div className="w-8 h-9 flex-[0_0_32px] border border-[color-mix(in_srgb,#f18181_28%,var(--line))] bg-[color-mix(in_srgb,#f18181_9%,var(--panel))] text-[#e99494] grid place-items-center rounded-[6px]">
-              <MdPictureAsPdf size={19} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div
-                className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-w-[195px]"
-                title={doc.name}
-              >
-                {doc.name}
-              </div>
-              <div className="text-[11.5px] text-muted mt-[3px]">
-                {doc.pages} {doc.pages === 1 ? 'page' : 'pages'}{' '}
-                <span className="px-[3px] text-muted-2">·</span>{' '}
-                {formatSize(doc.size)}
-                {doc.ingestTimeMs !== undefined && (
-                  <>
-                    <span className="px-[3px] text-muted-2">·</span>{' '}
-                    {doc.ingestTimeMs}ms ingest
-                  </>
-                )}
-              </div>
-            </div>
-            <button
-              className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Remove document"
-              onClick={() => onRemoveDocument(doc.id, doc.name)}
+        {filteredDocs.map((doc) => {
+          const isSelected = selectedDocumentId === doc.id;
+          return (
+            <div
+              className={`flex items-center gap-[9px] py-[9px] px-2 rounded-[7px] min-w-0 transition-colors cursor-pointer group ${
+                isSelected
+                  ? 'bg-panel-soft border border-line-strong'
+                  : 'hover:bg-panel-raised border border-transparent'
+              }`}
+              key={doc.id}
+              onClick={() => onSelectDocument?.(doc.id)}
+              title={`Click to open ${doc.name} in reader`}
             >
-              <MdClose size={16} />
-            </button>
-          </div>
-        ))}
+              <div
+                className={`w-8 h-9 flex-[0_0_32px] border rounded-[6px] grid place-items-center ${
+                  isSelected
+                    ? 'border-accent/40 bg-accent/15 text-accent'
+                    : 'border-[color-mix(in_srgb,#f18181_28%,var(--line))] bg-[color-mix(in_srgb,#f18181_9%,var(--panel))] text-[#e99494]'
+                }`}
+              >
+                <MdPictureAsPdf size={19} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div
+                  className={`text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-w-[195px] ${
+                    isSelected ? 'text-text' : ''
+                  }`}
+                  title={doc.name}
+                >
+                  {doc.name}
+                </div>
+                <div className="text-[11.5px] text-muted mt-[3px]">
+                  {doc.pages} {doc.pages === 1 ? 'page' : 'pages'}{' '}
+                  <span className="px-[3px] text-muted-2">·</span>{' '}
+                  {formatSize(doc.size)}
+                  {doc.ingestTimeMs !== undefined && (
+                    <>
+                      <span className="px-[3px] text-muted-2">·</span>{' '}
+                      {doc.ingestTimeMs}ms ingest
+                    </>
+                  )}
+                </div>
+              </div>
+              <button
+                className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Remove document"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveDocument(doc.id, doc.name);
+                }}
+              >
+                <MdClose size={16} />
+              </button>
+            </div>
+          );
+        })}
         {Boolean(docFilter && !filteredDocs.length) && (
           <div className="py-4 text-center text-xs text-muted">
             No documents matching &ldquo;{docFilter}&rdquo;

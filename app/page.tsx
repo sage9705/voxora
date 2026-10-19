@@ -6,6 +6,7 @@ import { Topbar } from '@/components/Topbar';
 import { WelcomeGrid } from '@/components/WelcomeGrid';
 import { ChatArea } from '@/components/ChatArea';
 import { Composer } from '@/components/Composer';
+import { DocumentViewer } from '@/components/DocumentViewer';
 import { Notice } from '@/components/Notice';
 import { PageHeading } from '@/components/PageHeading';
 import { Footer } from '@/components/Footer';
@@ -19,6 +20,17 @@ export default function Home() {
   const [dark, setDark] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
+
+  // Expanded Workspace State
+  const [workspaceMode, setWorkspaceMode] = useState<
+    'chat' | 'split' | 'reader'
+  >('split');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeDocId, setActiveDocId] = useState<string | undefined>(undefined);
+  const [viewerPage, setViewerPage] = useState<number | undefined>(undefined);
+  const [highlightPassage, setHighlightPassage] = useState<string | undefined>(
+    undefined,
+  );
 
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -36,6 +48,13 @@ export default function Home() {
     clearConversation,
     askQuestion,
   } = useDocumentChat();
+
+  // Auto-select latest uploaded document
+  useEffect(() => {
+    if (documents.length > 0 && !activeDocId) {
+      setActiveDocId(documents[0].id);
+    }
+  }, [documents, activeDocId]);
 
   const starters = useMemo(() => getDynamicStarters(documents), [documents]);
 
@@ -84,6 +103,43 @@ export default function Home() {
     cancelSpeech();
   }, [clearConversation, cancelSpeech]);
 
+  // Handler when clicking document in sidebar
+  const handleSelectDocument = useCallback((docId: string) => {
+    setActiveDocId(docId);
+    setViewerPage(1);
+    setHighlightPassage(undefined);
+    setWorkspaceMode((mode) => (mode === 'chat' ? 'split' : mode));
+  }, []);
+
+  // Handler when clicking citation [Page X] or source passage
+  const handleViewSource = useCallback(
+    (docId: string, page: number, excerpt?: string) => {
+      if (docId) {
+        setActiveDocId(docId);
+      }
+      setViewerPage(page);
+      setHighlightPassage(excerpt);
+      setWorkspaceMode((mode) => (mode === 'chat' ? 'split' : mode));
+    },
+    [],
+  );
+
+  // Handler for "Ask about page" from DocumentViewer
+  const handleAskAboutPage = useCallback(
+    (page: number, docName: string) => {
+      const prompt = `What are the most important details and takeaways on page ${page} of ${docName}?`;
+      setQuestion(prompt);
+      if (workspaceMode === 'reader') {
+        setWorkspaceMode('split');
+      }
+    },
+    [workspaceMode],
+  );
+
+  const isWideLayout =
+    documents.length > 0 &&
+    (workspaceMode === 'split' || workspaceMode === 'reader');
+
   return (
     <main className="min-h-screen flex bg-bg max-[760px]:block">
       <Sidebar
@@ -98,21 +154,37 @@ export default function Home() {
         onClearAllDocuments={clearAllDocuments}
         onOpenFileInput={() => fileInput.current?.click()}
         onToggleTheme={() => setDark((v) => !v)}
+        selectedDocumentId={activeDocId}
+        onSelectDocument={handleSelectDocument}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
       />
 
-      <section className="min-w-0 flex-1 flex flex-col">
+      <section className="min-w-0 flex-1 flex flex-col transition-all">
         <Topbar
           dark={dark}
           onToggleTheme={() => setDark((v) => !v)}
           onShowHelp={() =>
             setNotice(
-              'Upload PDFs, then ask a question by typing or using the microphone. Enable GROQ_API_KEY for AI-synthesized answers; without it, Voxora uses local passage retrieval.',
+              'Upload PDFs, then ask questions by voice or typing. Use Split View to read document pages and citations alongside AI answers.',
             )
           }
+          workspaceMode={workspaceMode}
+          onChangeWorkspaceMode={setWorkspaceMode}
+          documentsCount={documents.length}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed((v) => !v)}
         />
 
-        <div className="w-[min(1400px,calc(100%-72px))] mx-auto flex-1 flex flex-col max-[1200px]:w-[calc(100%-48px)] max-[760px]:w-[calc(100%-28px)]">
-          <PageHeading />
+        <div
+          className={`mx-auto flex-1 flex flex-col transition-all duration-200 ${
+            isWideLayout
+              ? 'w-[calc(100%-32px)] max-w-[1920px] px-1 sm:px-2'
+              : 'w-[min(1400px,calc(100%-72px))] max-[1200px]:w-[calc(100%-48px)] max-[760px]:w-[calc(100%-28px)]'
+          }`}
+        >
+          {/* Show landing hero banner only when library is empty or in single-column chat mode */}
+          {!documents.length && <PageHeading />}
 
           {!documents.length ? (
             <WelcomeGrid
@@ -122,28 +194,102 @@ export default function Home() {
               onOpenFileInput={() => fileInput.current?.click()}
             />
           ) : (
-            <ChatArea
-              documentsCount={documents.length}
-              messages={messages}
-              asking={asking}
-              autoSpeak={autoSpeak}
-              starters={starters}
-              onToggleAutoSpeak={() => setAutoSpeak((v) => !v)}
-              onToggleHistory={() => setShowHistory((v) => !v)}
-              onClearConversation={handleClear}
-              onSelectStarter={(q) => handleAsk(q)}
-              onReadAloud={speak}
-            >
-              <Composer
-                question={question}
-                setQuestion={setQuestion}
-                asking={asking}
-                listening={listening}
-                starters={starters}
-                onAsk={(q, fromVoice) => handleAsk(q, fromVoice)}
-                onToggleVoice={toggleVoice}
-              />
-            </ChatArea>
+            <>
+              {/* Split Mode: Side-by-Side Chat & Document Viewer */}
+              {workspaceMode === 'split' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 flex-1 items-stretch min-h-[620px] mt-4 mb-5">
+                  <div className="flex flex-col min-w-0 h-full">
+                    <ChatArea
+                      documentsCount={documents.length}
+                      messages={messages}
+                      asking={asking}
+                      autoSpeak={autoSpeak}
+                      starters={starters}
+                      onToggleAutoSpeak={() => setAutoSpeak((v) => !v)}
+                      onToggleHistory={() => setShowHistory((v) => !v)}
+                      onClearConversation={handleClear}
+                      onSelectStarter={(q) => handleAsk(q)}
+                      onReadAloud={speak}
+                      onViewSource={handleViewSource}
+                      onToggleSplitView={() => setWorkspaceMode('chat')}
+                      splitViewActive={true}
+                    >
+                      <Composer
+                        question={question}
+                        setQuestion={setQuestion}
+                        asking={asking}
+                        listening={listening}
+                        starters={starters}
+                        onAsk={(q, fromVoice) => handleAsk(q, fromVoice)}
+                        onToggleVoice={toggleVoice}
+                      />
+                    </ChatArea>
+                  </div>
+
+                  <div className="flex flex-col min-w-0 h-full">
+                    <DocumentViewer
+                      documents={documents}
+                      activeDocumentId={activeDocId}
+                      activePage={viewerPage}
+                      highlightText={highlightPassage}
+                      onSelectDocument={(id) => setActiveDocId(id)}
+                      onCloseViewer={() => setWorkspaceMode('chat')}
+                      onAskAboutPage={handleAskAboutPage}
+                      isExpanded={false}
+                      onToggleExpand={() => setWorkspaceMode('reader')}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Full Document Reader View */}
+              {workspaceMode === 'reader' && (
+                <div className="flex-1 flex flex-col min-h-[680px] mt-4 mb-5">
+                  <DocumentViewer
+                    documents={documents}
+                    activeDocumentId={activeDocId}
+                    activePage={viewerPage}
+                    highlightText={highlightPassage}
+                    onSelectDocument={(id) => setActiveDocId(id)}
+                    onCloseViewer={() => setWorkspaceMode('chat')}
+                    onAskAboutPage={handleAskAboutPage}
+                    isExpanded={true}
+                    onToggleExpand={() => setWorkspaceMode('split')}
+                  />
+                </div>
+              )}
+
+              {/* Standard Chat Only View */}
+              {workspaceMode === 'chat' && (
+                <div className="flex-1 flex flex-col mt-4">
+                  <ChatArea
+                    documentsCount={documents.length}
+                    messages={messages}
+                    asking={asking}
+                    autoSpeak={autoSpeak}
+                    starters={starters}
+                    onToggleAutoSpeak={() => setAutoSpeak((v) => !v)}
+                    onToggleHistory={() => setShowHistory((v) => !v)}
+                    onClearConversation={handleClear}
+                    onSelectStarter={(q) => handleAsk(q)}
+                    onReadAloud={speak}
+                    onViewSource={handleViewSource}
+                    onToggleSplitView={() => setWorkspaceMode('split')}
+                    splitViewActive={false}
+                  >
+                    <Composer
+                      question={question}
+                      setQuestion={setQuestion}
+                      asking={asking}
+                      listening={listening}
+                      starters={starters}
+                      onAsk={(q, fromVoice) => handleAsk(q, fromVoice)}
+                      onToggleVoice={toggleVoice}
+                    />
+                  </ChatArea>
+                </div>
+              )}
+            </>
           )}
 
           <Notice message={notice} onDismiss={() => setNotice('')} />
@@ -151,7 +297,7 @@ export default function Home() {
           <Footer
             onShowHowItWorks={() =>
               setNotice(
-                'Voxora reads text-based PDF files, retrieves relevant passages and returns source references. Add a Groq API key for AI-synthesized answers.',
+                'Voxora reads PDF files, retrieves grounded passages, and features interactive page viewing and AI synthesis with Groq.',
               )
             }
           />
