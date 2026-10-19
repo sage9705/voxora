@@ -1,19 +1,17 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import {
-  MdBolt,
-  MdCircle,
-  MdDeleteOutline,
-  MdForum,
-  MdGraphicEq,
-  MdMenuBook,
-  MdNorthEast,
-  MdPerson,
-  MdToken,
-  MdVerticalSplit,
-  MdVolumeUp,
-} from 'react-icons/md';
+import Bolt from '@mui/icons-material/Bolt';
+import Circle from '@mui/icons-material/Circle';
+import DeleteOutline from '@mui/icons-material/DeleteOutlineOutlined';
+import Forum from '@mui/icons-material/Forum';
+import GraphicEq from '@mui/icons-material/GraphicEq';
+import MenuBook from '@mui/icons-material/MenuBook';
+import NorthEast from '@mui/icons-material/NorthEast';
+import Person from '@mui/icons-material/Person';
+import Token from '@mui/icons-material/Token';
+import VerticalSplit from '@mui/icons-material/VerticalSplit';
+import VolumeUp from '@mui/icons-material/VolumeUp';
 import type { ChatMessage } from '@/lib/types';
 
 type ChatAreaProps = {
@@ -237,7 +235,7 @@ export function ChatArea({
       <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-5 max-[760px]:px-3.5">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent">
-            <MdMenuBook size={18} />
+            <MenuBook style={{ fontSize: 18 }} />
           </div>
           <div className="flex flex-col gap-1">
             <strong className="text-[13.5px] font-semibold">
@@ -245,7 +243,7 @@ export function ChatArea({
             </strong>
             <span className="text-xs text-muted max-[760px]:text-[11.5px] flex items-center">
               {documentsCount} {documentsCount === 1 ? 'document' : 'documents'}{' '}
-              in context <MdCircle size={7} className="text-[#9bd87c] mx-1.5" />{' '}
+              in context <Circle style={{ fontSize: 7 }} className="text-[#9bd87c] mx-1.5" />{' '}
               Ready to ask
             </span>
           </div>
@@ -265,7 +263,7 @@ export function ChatArea({
                   : 'Open document side-by-side'
               }
             >
-              <MdVerticalSplit size={16} />{' '}
+              <VerticalSplit style={{ fontSize: 16 }} />{' '}
               <span className="max-[760px]:hidden">
                 {splitViewActive ? 'Hide reader' : 'View document'}
               </span>
@@ -282,21 +280,21 @@ export function ChatArea({
               autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'
             }
           >
-            <MdVolumeUp size={16} />{' '}
+            <VolumeUp style={{ fontSize: 16 }} />{' '}
             {autoSpeak ? 'Voice answers: On' : 'Voice answers: Off'}
           </button>
           <button
             className="h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-muted text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
             onClick={onToggleHistory}
           >
-            <MdForum size={16} /> History
+            <Forum style={{ fontSize: 16 }} /> History
           </button>
           <button
             className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text transition-colors"
             onClick={onClearConversation}
             title="Clear conversation"
           >
-            <MdDeleteOutline size={18} />
+            <DeleteOutline style={{ fontSize: 18 }} />
           </button>
         </div>
       </div>
@@ -305,7 +303,7 @@ export function ChatArea({
         {!messages.length ? (
           <div className="max-w-[860px] mx-auto mt-5 mb-0 text-center max-[760px]:mt-3.5">
             <div className="h-14 w-14 grid place-items-center rounded-[18px] border border-line-strong bg-panel-raised text-accent mx-auto mb-4">
-              <MdGraphicEq size={30} />
+              <GraphicEq style={{ fontSize: 30 }} />
             </div>
             <h2 className="font-heading font-semibold text-[22px] tracking-[-0.7px] mt-0 mb-2.5">
               Let&apos;s find something.
@@ -326,8 +324,8 @@ export function ChatArea({
                   <strong className="text-[13px] leading-[1.5] font-medium max-w-[calc(100%-14px)] max-[760px]:max-w-[90%] max-[760px]:text-[12.5px]">
                     {item.question}
                   </strong>
-                  <MdNorthEast
-                    size={16}
+                  <NorthEast
+                    style={{ fontSize: 16 }}
                     className="absolute right-[11px] top-[11px] text-muted-2"
                   />
                 </button>
@@ -349,9 +347,9 @@ export function ChatArea({
                   }`}
                 >
                   {message.role === 'assistant' ? (
-                    <MdGraphicEq size={20} />
+                    <GraphicEq style={{ fontSize: 20 }} />
                   ) : (
-                    <MdPerson size={18} />
+                    <Person style={{ fontSize: 18 }} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -377,7 +375,7 @@ export function ChatArea({
                             className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Processing latency"
                           >
-                            <MdBolt size={13} className="text-accent" />{' '}
+                            <Bolt style={{ fontSize: 13 }} className="text-accent" />{' '}
                             {message.latencyMs}ms
                           </span>
                         )}
@@ -386,7 +384,7 @@ export function ChatArea({
                             className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Question to first audible answer"
                           >
-                            <MdVolumeUp size={13} className="text-accent" />{' '}
+                            <VolumeUp style={{ fontSize: 13 }} className="text-accent" />{' '}
                             {message.audioLatencyMs}ms to audio
                           </span>
                         )}
@@ -397,7 +395,7 @@ export function ChatArea({
                               className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                               title={`Prompt: ${message.usage.promptTokens ?? 0}, Completion: ${message.usage.completionTokens ?? 0}`}
                             >
-                              <MdToken size={13} className="text-accent" />
+                              <Token style={{ fontSize: 13 }} className="text-accent" />
                               {message.usage.totalTokens} tokens · est. $
                               {message.usage.estimatedCostUsd !== undefined
                                 ? message.usage.estimatedCostUsd.toFixed(5)
@@ -417,11 +415,11 @@ export function ChatArea({
                         className="flex items-center gap-1.5 border-0 bg-transparent p-0 text-muted text-xs transition-colors duration-150 hover:text-accent cursor-pointer"
                         onClick={() => onReadAloud(message.content)}
                       >
-                        <MdVolumeUp size={15} /> Read aloud
+                        <VolumeUp style={{ fontSize: 15 }} /> Read aloud
                       </button>
                       {message.sources?.length ? (
                         <span className="flex items-center gap-1.5 text-muted text-xs">
-                          <MdMenuBook size={15} /> {message.sources.length}{' '}
+                          <MenuBook style={{ fontSize: 15 }} /> {message.sources.length}{' '}
                           sources
                         </span>
                       ) : null}
@@ -456,8 +454,8 @@ export function ChatArea({
                               <strong className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-[760px]:whitespace-normal group-hover/ref:text-accent transition-colors">
                                 {source.documentName}
                               </strong>
-                              <MdNorthEast
-                                size={13}
+                              <NorthEast
+                                style={{ fontSize: 13 }}
                                 className="text-muted-2 group-hover/ref:text-accent opacity-0 group-hover/ref:opacity-100 transition-opacity"
                               />
                             </div>
@@ -479,7 +477,7 @@ export function ChatArea({
             {asking && (
               <div className="flex items-start gap-[13px] max-[760px]:gap-2.5">
                 <div className="h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] bg-accent text-accent-ink">
-                  <MdGraphicEq size={20} />
+                  <GraphicEq style={{ fontSize: 20 }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="min-h-[26px] flex flex-wrap items-center gap-x-2.5 gap-y-2 mb-1.5">
