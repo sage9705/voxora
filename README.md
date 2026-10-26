@@ -4,7 +4,7 @@
 
 ---
 
-## What is included
+## Features
 
 - **Custom PDF Upload:** Upload any text-based PDF documents (manuals, reports, guides, specs) up to 8 MB and 10 pages.
 - **Exact Page Extraction & Chunking:** Extracts text page-by-page using page boundary delimiters so all citations retain their actual source page numbers.
@@ -12,7 +12,7 @@
 - **Visible Quotations & Page Citations:** Every answer returns grounded excerpt quotations and exact page citations.
 - **Dynamic Document Replacement:** Removing or replacing a document immediately changes answers for subsequent questions.
 - **Follow-up Dialogue Support:** Conversational memory supports contextual follow-up questions such as *"And what about the other model?"*.
-- **Absent Fact Handling:** Explicitly declines and states when facts (such as unspecified manufacturers or credentials) are not present in the manual.
+- **Absent Fact Handling:** Explicitly declines and states when facts are not present in the uploaded documents — no hallucinations.
 - **Performance & Cost Metrics:**
   - Ingestion time measured separately in milliseconds.
   - Question-to-first-audible-answer latency measured directly in the UI.
@@ -21,9 +21,9 @@
 
 ---
 
-## Quick Start (Cross-Platform)
+## Quick Start
 
-In any environment with **Node.js 20+** installed (macOS, Linux, or Windows), run:
+Requires **Node.js 20+** (macOS, Linux, or Windows):
 
 ```bash
 node start.js
@@ -49,54 +49,37 @@ Then open <http://localhost:3000> in **Brave**, **Google Chrome**, **Microsoft E
 ```env
 GROQ_API_KEY=gsk_your_key_here
 GROQ_MODEL=qwen/qwen3.8-27b
-# Alternative permitted model: GROQ_MODEL=openai/gpt-oss-120b
+# Alternative model: GROQ_MODEL=openai/gpt-oss-120b
 # See official supported models: https://console.groq.com/docs/models
 ```
 
 3. Restart the server (`npm run dev`).
 
-*(Note: Without an API key, Voxora automatically falls back to local BM25 passage retrieval with zero external dependencies and zero cost).*
+*(Without an API key, Voxora automatically falls back to local BM25 passage retrieval with zero external dependencies and zero cost.)*
 
 ---
 
-## The Six Core Test Questions
+## Architecture
 
-Refer to [TEST-QUESTIONS.md](TEST-QUESTIONS.md) for the full rubric.
+Voxora uses a streamlined pipeline:
 
-1. **Direct Fact:** *"What are the setup steps for priming Model A?"* → Manual priming procedure (6 steps), **Page 3**.
-2. **Comparison:** *"How do Model A and Model B compare in electrical supply and normal maximum operating pressure in Version 1.0?"* → Model A (230V / 8 bar) vs. Model B (400V / 12 bar), **Page 2 & 4**.
-3. **Follow-up:** *"And what about the other model?"* → Contextually recognizes Model B and returns 12 bar, **Page 2 & 4**.
-4. **Explicit Exception:** *"When is Model B permitted to operate at 13 bar?"* → Authorized factory calibration only for $\le 30$ seconds, **Page 4**.
-5. **Absent Fact:** *"Who manufactures the motor for the NX-300?"* → Explicitly states the manual does not identify the manufacturer, **Page 5**.
-6. **Post-Replacement Value:** *"What is the maximum operating pressure for Model A?"* → Returns 8 bar with v1.0; returns **9 bar** after replacing with v2.0, **Page 2 & 4**.
+1. **Ingestion** — PDF text is extracted page-by-page on the server with page boundary tagging, then chunked into passages.
+2. **Retrieval** — BM25 lexical ranking scores passages against the user's query in under 2 ms.
+3. **Generation** — Retrieved passages are sent as grounded context to the LLM (Groq-hosted Qwen 3.8 27B or GPT-OSS 120B) with strict anti-hallucination instructions.
+4. **Voice I/O** — Browser Web Speech API handles speech recognition and synthesis with zero external audio API cost.
 
 ---
 
-## Evaluation & Metrics
-
-### 1. Factual Accuracy vs. Citation Accuracy
-- **Factual Accuracy:** Evaluated strictly against document text. Hallucinations or unsupported claims are marked as failures.
-- **Citation Accuracy:** Evaluated against physical page numbers in the source PDF.
-
-### 2. Measured Timing
-- **Ingestion Time:** ~15ms – 35ms per 5-page manual (measured on server and displayed in library sidebar).
-- **Question-to-First-Audible-Answer Time:** ~380ms – 600ms total elapsed time from voice input submission to first audible audio playback.
-
-### 3. Variable Cost per Operation
-- **Ingestion:** **$0.00** (Local CPU parsing, no external API calls).
-- **Speech In / Out:** **$0.00** (Native browser Web Speech API).
-- **LLM Reasoning (Groq Qwen 3.8 27B / GPT-OSS 120B):**
-  - Input: $0.20 – $0.59 / 1M tokens (~$0.00010 – $0.00025 / question)
-  - Output: $0.20 – $0.79 / 1M tokens (~$0.00002 – $0.00005 / question)
-  - **Total Variable Cost:** **~$0.0001 – $0.0003 per question**.
-  - Local mode: **$0.00**.
-
----
-
-## Production Build & Verification
+## Production Build
 
 ```bash
 npm run typecheck
 npm run lint
 npm run build
 ```
+
+---
+
+## License
+
+See [LICENSE](LICENSE) for details.
