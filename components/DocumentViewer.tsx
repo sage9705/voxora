@@ -54,24 +54,25 @@ export function DocumentViewer({
     }
   }, [externalPage]);
 
-  // Extract pages from document text or reconstruct from chunks
   const pagesData = useMemo(() => {
     if (!currentDoc) return [];
 
-    // Attempt splitting by explicit page break markers first
-    const markerRegex = /\n\s*---\s*PAGE\s*BREAK\s*---\s*\n|\f/i;
-    if (markerRegex.test(currentDoc.text)) {
-      const parts = currentDoc.text.split(markerRegex);
-      if (parts.length > 1 && parts[0].trim() === '') {
-        parts.shift();
-      }
+    let raw = currentDoc.text;
+    raw = raw.replace(/^(?:\s*---\s*PAGE\s*BREAK\s*---\s*)+/i, '');
+
+    const markerRegex = /(?:^|\n)\s*---\s*PAGE\s*BREAK\s*---\s*(?:\n|$)/i;
+    if (markerRegex.test(raw)) {
+      const parts = raw
+        .split(markerRegex)
+        .map((t) => t.replace(/^(?:\s*---\s*PAGE\s*BREAK\s*---\s*)+/i, '').trim())
+        .filter((t) => t.length > 0);
+
       return parts.map((text, idx) => ({
         pageNumber: idx + 1,
-        text: text.trim(),
+        text,
       }));
     }
 
-    // Fallback: group chunks by page
     const pageMap = new Map<number, string[]>();
     for (const chunk of currentDoc.chunks) {
       const list = pageMap.get(chunk.page) ?? [];
@@ -82,9 +83,10 @@ export function DocumentViewer({
     const result: Array<{ pageNumber: number; text: string }> = [];
     const maxPage = Math.max(currentDoc.pages, pageMap.size, 1);
     for (let p = 1; p <= maxPage; p++) {
+      const rawPage = pageMap.get(p)?.join('\n\n') ?? '';
       result.push({
         pageNumber: p,
-        text: pageMap.get(p)?.join('\n\n') ?? '',
+        text: rawPage.replace(/^(?:\s*---\s*PAGE\s*BREAK\s*---\s*)+/i, '').trim(),
       });
     }
     return result;
@@ -94,7 +96,6 @@ export function DocumentViewer({
   const activePageData =
     pagesData.find((p) => p.pageNumber === currentPage) ?? pagesData[0];
 
-  // Scroll to highlight when citation is jumped to
   useEffect(() => {
     if (highlightText && pageContainerRef.current) {
       const el = pageContainerRef.current.querySelector('.passage-highlight');
@@ -119,45 +120,34 @@ export function DocumentViewer({
     );
   }
 
-  // Render text with optional keyword search or passage highlighting
-  const renderHighlightedText = (text: string) => {
+  const renderFormattedDocumentContent = (rawText: string) => {
+    let text = rawText
+      .replace(/\u0000/g, '')
+      .replace(/^(?:\s*---\s*PAGE\s*BREAK\s*---\s*)+/gi, '')
+      .replace(/(?:\s*---\s*PAGE\s*BREAK\s*---\s*)+$/gi, '')
+      .trim();
+
     if (!text) {
       return (
-        <p className="text-muted italic text-sm py-4">
+        <p className="text-muted italic text-sm py-4 text-center">
           [Empty page or image-only content with no extractable text]
         </p>
       );
     }
 
+    text = text.replace(/([a-zA-Z0-9])\s*-\s*\n\s*([a-zA-Z0-9])/g, '$1-$2');
+    text = text.replace(/([a-zA-Z0-9)])\s*-\s*([a-zA-Z0-9(])/g, '$1-$2');
+
     const query = searchQuery.trim().toLowerCase();
     const highlightTarget = highlightText?.trim().toLowerCase();
 
-    // Check if whole text contains the highlighted citation passage
-    if (
-      highlightTarget &&
-      highlightTarget.length > 20 &&
-      text.toLowerCase().includes(highlightTarget)
-    ) {
-      const startIdx = text.toLowerCase().indexOf(highlightTarget);
-      const before = text.slice(0, startIdx);
-      const match = text.slice(startIdx, startIdx + highlightTarget.length);
-      const after = text.slice(startIdx + highlightTarget.length);
+    function renderSearchMatches(segment: string): React.ReactNode {
+      if (!query || !segment.toLowerCase().includes(query)) {
+        return segment;
+      }
+      const parts = segment.split(new RegExp(`(${query})`, 'gi'));
       return (
-        <span className="whitespace-pre-wrap leading-relaxed">
-          {before}
-          <mark className="passage-highlight bg-accent/25 text-text border-b-2 border-accent px-1 py-0.5 rounded animate-[pulse_2s_ease-in-out_2]">
-            {match}
-          </mark>
-          {after}
-        </span>
-      );
-    }
-
-    // Check search query matches
-    if (query && text.toLowerCase().includes(query)) {
-      const parts = text.split(new RegExp(`(${query})`, 'gi'));
-      return (
-        <span className="whitespace-pre-wrap leading-relaxed">
+        <>
           {parts.map((part, i) =>
             part.toLowerCase() === query ? (
               <mark
@@ -170,11 +160,328 @@ export function DocumentViewer({
               part
             ),
           )}
-        </span>
+        </>
       );
     }
 
-    return <span className="whitespace-pre-wrap leading-relaxed">{text}</span>;
+    function renderInlineMatches(segment: string): React.ReactNode {
+      if (!segment) return null;
+
+      if (highlightTarget && highlightTarget.length > 15) {
+        const lower = segment.toLowerCase();
+        const startIdx = lower.indexOf(highlightTarget);
+        if (startIdx !== -1) {
+          const before = segment.slice(0, startIdx);
+          const matched = segment.slice(
+            startIdx,
+            startIdx + highlightTarget.length,
+          );
+          const after = segment.slice(startIdx + highlightTarget.length);
+          return (
+            <>
+              {renderSearchMatches(before)}
+              <mark className="passage-highlight bg-accent/25 text-text border-b-2 border-accent px-1 py-0.5 rounded animate-[pulse_2s_ease-in-out_2]">
+                {matched}
+              </mark>
+              {renderSearchMatches(after)}
+            </>
+          );
+        }
+      }
+
+      return renderSearchMatches(segment);
+    }
+
+    const rawLines = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && l !== '---PAGE BREAK---');
+    const elements: React.ReactNode[] = [];
+    let idx = 0;
+
+    if (currentPage === 1 && rawLines.length >= 2) {
+      const isHeader =
+        !rawLines[0].startsWith('•') &&
+        !rawLines[0].startsWith('[]') &&
+        rawLines[0].length < 40 &&
+        !rawLines[0].includes('|');
+
+      if (isHeader) {
+        const name = rawLines[0];
+        let title = '';
+        let contactLine = '';
+        let linksLine = '';
+        idx = 1;
+
+        if (
+          idx < rawLines.length &&
+          !rawLines[idx].includes('|') &&
+          rawLines[idx].length < 45 &&
+          !/^[A-Z\s]{4,}$/.test(rawLines[idx])
+        ) {
+          title = rawLines[idx];
+          idx++;
+        }
+        if (
+          idx < rawLines.length &&
+          (rawLines[idx].includes('|') ||
+            rawLines[idx].includes('@') ||
+            rawLines[idx].includes('+'))
+        ) {
+          contactLine = rawLines[idx];
+          idx++;
+        }
+        if (
+          idx < rawLines.length &&
+          (rawLines[idx].includes('linkedin') ||
+            rawLines[idx].includes('github') ||
+            rawLines[idx].includes('http') ||
+            rawLines[idx].includes('|'))
+        ) {
+          linksLine = rawLines[idx];
+          idx++;
+        }
+
+        elements.push(
+          <div
+            key="doc-header"
+            className="text-center pb-4 mb-4 border-b border-line/50"
+          >
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text uppercase">
+              {renderInlineMatches(name)}
+            </h1>
+            {title && (
+              <div className="text-[14px] sm:text-[15px] font-semibold text-accent/90 mt-1">
+                {renderInlineMatches(title)}
+              </div>
+            )}
+            {contactLine && (
+              <div className="text-xs text-muted mt-2 leading-relaxed">
+                {renderInlineMatches(contactLine)}
+              </div>
+            )}
+            {linksLine && (
+              <div className="text-xs text-accent mt-1.5 flex flex-wrap justify-center gap-x-3 gap-y-1">
+                {linksLine.split('|').map((part, pIdx) => {
+                  const trimmed = part.trim();
+                  const isUrl =
+                    trimmed.startsWith('http') ||
+                    trimmed.startsWith('www') ||
+                    trimmed.includes('.com') ||
+                    trimmed.includes('.org');
+                  const href =
+                    isUrl && !trimmed.startsWith('http')
+                      ? `https://${trimmed}`
+                      : trimmed;
+                  return isUrl ? (
+                    <a
+                      key={pIdx}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline text-accent"
+                    >
+                      {renderInlineMatches(trimmed)}
+                    </a>
+                  ) : (
+                    <span key={pIdx}>{renderInlineMatches(trimmed)}</span>
+                  );
+                })}
+              </div>
+            )}
+          </div>,
+        );
+      }
+    }
+
+    while (idx < rawLines.length) {
+      const line = rawLines[idx];
+
+      const isSectionHeading =
+        /^(?:PROFESSIONAL SUMMARY|PROFESSIONAL EXPERIENCE|TECHNICAL SKILLS|EDUCATION|PROJECTS|CERTIFICATIONS|CORE COMPETENCIES|WORK EXPERIENCE|SUMMARY|SKILLS|PUBLICATIONS|AWARDS)$/i.test(
+          line,
+        ) ||
+        (/^[A-Z0-9\s/&,.-]{4,40}$/.test(line) &&
+          !line.endsWith('.') &&
+          !line.startsWith('•') &&
+          !line.startsWith('[]') &&
+          !line.includes('|'));
+
+      if (isSectionHeading) {
+        const cleanHeading = line.replace(/^#+\s*/, '');
+        elements.push(
+          <div key={`heading-${idx}`} className="mt-6 mb-3 first:mt-0">
+            <h2 className="text-[13.5px] font-bold text-accent tracking-[0.6px] uppercase font-heading">
+              {renderInlineMatches(cleanHeading)}
+            </h2>
+            <div className="border-b-2 border-accent/40 w-full mt-1.5 mb-2.5" />
+          </div>,
+        );
+        idx++;
+        continue;
+      }
+
+      const isExpCompany =
+        idx + 1 < rawLines.length &&
+        /^[A-Za-z0-9\s,&.-]{3,35}$/.test(line) &&
+        !line.startsWith('•') &&
+        !line.startsWith('[]') &&
+        !line.includes('|') &&
+        rawLines.some(
+          (l, i) =>
+            i > idx &&
+            i < idx + 5 &&
+            /(?:Present|\d{4}|Remote|Contract|Full-time)/i.test(l),
+        );
+
+      if (isExpCompany && !line.includes('.') && line.length < 35) {
+        const company = line;
+        let role = '';
+        let dates = '';
+        let location = '';
+        let contract = '';
+        idx++;
+
+        if (
+          idx < rawLines.length &&
+          !/(?:Present|\d{4})/i.test(rawLines[idx]) &&
+          !rawLines[idx].startsWith('•') &&
+          !rawLines[idx].startsWith('[]')
+        ) {
+          role = rawLines[idx];
+          idx++;
+        }
+        if (
+          idx < rawLines.length &&
+          /(?:Present|\d{4})/i.test(rawLines[idx])
+        ) {
+          dates = rawLines[idx];
+          idx++;
+        }
+        if (
+          idx < rawLines.length &&
+          /^[A-Z]{2,4}$|^[A-Za-z\s,]+$/.test(rawLines[idx]) &&
+          rawLines[idx].length < 25 &&
+          !rawLines[idx].startsWith('•') &&
+          !rawLines[idx].startsWith('[]')
+        ) {
+          location = rawLines[idx];
+          idx++;
+        }
+        if (
+          idx < rawLines.length &&
+          /(?:Remote|Contract|Full-time|Part-time)/i.test(rawLines[idx])
+        ) {
+          contract = rawLines[idx];
+          idx++;
+        }
+
+        elements.push(
+          <div
+            key={`exp-head-${idx}`}
+            className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 mt-4 mb-2.5"
+          >
+            <div>
+              <div className="font-bold text-[14.5px] text-accent tracking-tight">
+                {renderInlineMatches(company)}
+              </div>
+              {role && (
+                <div className="text-[13px] italic text-text font-medium mt-0.5">
+                  {renderInlineMatches(role)}
+                </div>
+              )}
+            </div>
+            <div className="sm:text-right text-xs text-muted shrink-0">
+              {dates && (
+                <div className="font-semibold text-text">
+                  {renderInlineMatches(dates)}
+                </div>
+              )}
+              {location && <div>{renderInlineMatches(location)}</div>}
+              {contract && (
+                <div className="italic text-muted-2">
+                  {renderInlineMatches(contract)}
+                </div>
+              )}
+            </div>
+          </div>,
+        );
+        continue;
+      }
+
+      const isBulletStart =
+        line.startsWith('•') ||
+        line.startsWith('[]') ||
+        line.startsWith('[ ]') ||
+        /^[-*]\s+/.test(line);
+
+      if (isBulletStart) {
+        let bulletText = line.replace(/^(?:•|\[\]|\[\s*\]|[-*])\s*/, '');
+        idx++;
+
+        while (
+          idx < rawLines.length &&
+          !rawLines[idx].startsWith('•') &&
+          !rawLines[idx].startsWith('[]') &&
+          !rawLines[idx].startsWith('[ ]') &&
+          !/^[-*]\s+/.test(rawLines[idx]) &&
+          !/^(?:PROFESSIONAL SUMMARY|PROFESSIONAL EXPERIENCE|TECHNICAL SKILLS|EDUCATION|PROJECTS|CERTIFICATIONS)$/i.test(
+            rawLines[idx],
+          ) &&
+          !(
+            rawLines[idx].length < 35 &&
+            /^[A-Za-z0-9\s,&.-]{3,35}$/.test(rawLines[idx]) &&
+            idx + 2 < rawLines.length &&
+            /(?:Present|\d{4})/i.test(rawLines[idx + 1] + rawLines[idx + 2])
+          )
+        ) {
+          bulletText += ' ' + rawLines[idx];
+          idx++;
+        }
+
+        elements.push(
+          <div
+            key={`bullet-${idx}`}
+            className="flex items-start gap-2.5 my-2 pl-0.5"
+          >
+            <span className="text-accent text-[13px] mt-0.5 shrink-0 select-none font-bold leading-none">
+              •
+            </span>
+            <div className="text-[13px] text-text leading-[1.65] flex-1 text-justify sm:text-left">
+              {renderInlineMatches(bulletText)}
+            </div>
+          </div>,
+        );
+        continue;
+      }
+
+      let paraText = line;
+      idx++;
+      while (
+        idx < rawLines.length &&
+        !rawLines[idx].startsWith('•') &&
+        !rawLines[idx].startsWith('[]') &&
+        !rawLines[idx].startsWith('[ ]') &&
+        !/^[-*]\s+/.test(rawLines[idx]) &&
+        !/^(?:PROFESSIONAL SUMMARY|PROFESSIONAL EXPERIENCE|TECHNICAL SKILLS|EDUCATION|PROJECTS|CERTIFICATIONS)$/i.test(
+          rawLines[idx],
+        )
+      ) {
+        paraText += ' ' + rawLines[idx];
+        idx++;
+      }
+
+      elements.push(
+        <p
+          key={`para-${idx}`}
+          className="my-2.5 text-[13px] text-text leading-[1.7] text-justify sm:text-left"
+        >
+          {renderInlineMatches(paraText)}
+        </p>,
+      );
+    }
+
+    return <div className="space-y-1">{elements}</div>;
   };
 
   const fontSizeClass =
@@ -185,7 +492,7 @@ export function DocumentViewer({
         : 'text-[14px] leading-[1.7]';
 
   return (
-    <div className="border border-line bg-panel rounded-xl overflow-hidden flex flex-col flex-1 h-full min-h-[560px] shadow-sm transition-all duration-200">
+    <div className="border border-line bg-panel rounded-xl overflow-hidden flex flex-col flex-1 h-full min-h-0 shadow-sm transition-all duration-200">
       {/* Top Document Tabs (when multiple files uploaded) */}
       <div className="h-11 border-b border-line bg-panel-soft/60 px-3 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto no-scrollbar">
@@ -365,9 +672,9 @@ export function DocumentViewer({
       {/* Main Document Content Canvas */}
       <div
         ref={pageContainerRef}
-        className="flex-1 overflow-y-auto p-5 sm:p-7 bg-bg/50 flex flex-col items-center"
+        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-7 bg-bg/50 flex flex-col items-center scroll-smooth"
       >
-        <div className="w-full max-w-[760px] bg-panel-raised border border-line rounded-lg shadow-sm p-6 sm:p-8 min-h-[460px] relative transition-all">
+        <div className="w-full max-w-[800px] bg-panel-raised border border-line rounded-lg shadow-sm p-6 sm:p-10 my-0 sm:my-2 transition-all">
           {/* Page Card Header Banner */}
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-line text-xs text-muted-2">
             <div className="flex items-center gap-2">
@@ -407,7 +714,7 @@ export function DocumentViewer({
 
           {/* Page Text Body */}
           <div className={`font-sans text-text select-text ${fontSizeClass}`}>
-            {renderHighlightedText(activePageData?.text ?? '')}
+            {renderFormattedDocumentContent(activePageData?.text ?? '')}
           </div>
 
           {/* Bottom Page Footer Indicator */}
