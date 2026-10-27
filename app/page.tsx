@@ -42,7 +42,6 @@ export default function Home() {
     notice,
     setNotice,
     uploadFiles,
-    loadSamples,
     removeDocument,
     clearAllDocuments,
     clearConversation,
@@ -190,7 +189,6 @@ export default function Home() {
             <WelcomeGrid
               uploading={uploading}
               onUploadFiles={uploadFiles}
-              onLoadSamples={loadSamples}
               onOpenFileInput={() => fileInput.current?.click()}
             />
           ) : (
