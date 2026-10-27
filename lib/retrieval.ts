@@ -1,4 +1,7 @@
 import type { SourceChunk } from './types';
+import { computeDenseEmbedding, cosineSimilarity } from './embeddings';
+
+export { computeDenseEmbedding, cosineSimilarity };
 
 const STOP_WORDS = new Set(
   'a an and are as at be by for from has have how i in is it of on or that the this to was what when where which who why with can does do did tell me about according'.split(
@@ -28,9 +31,7 @@ export function splitIntoChunks(
   documentId: string,
   documentName: string,
 ): SourceChunk[] {
-  // Support explicit page break markers, form feed characters (\f), or double form feeds
   const rawPages = text.split(/\n\s*---\s*PAGE\s*BREAK\s*---\s*\n|\f/i);
-  // If the document began with a page break, the first element might be empty
   if (rawPages.length > 1 && rawPages[0].trim() === '') {
     rawPages.shift();
   }
@@ -46,36 +47,60 @@ export function splitIntoChunks(
     let buffer = '';
     for (const sentence of sentences) {
       if ((buffer + ' ' + sentence).length > 850 && buffer.trim()) {
+        const chunkText = buffer.trim();
         chunks.push({
           id: `${documentId}-${pageNumber}-${chunks.length}`,
           documentId,
           documentName,
           page: pageNumber,
-          text: buffer.trim(),
+          text: chunkText,
+          embedding: computeDenseEmbedding(chunkText),
         });
         buffer = sentence;
       } else buffer += ` ${sentence}`;
     }
-    if (buffer.trim())
+    if (buffer.trim()) {
+      const chunkText = buffer.trim();
       chunks.push({
         id: `${documentId}-${pageNumber}-${chunks.length}`,
         documentId,
         documentName,
         page: pageNumber,
-        text: buffer.trim(),
+        text: chunkText,
+        embedding: computeDenseEmbedding(chunkText),
       });
+    }
   });
   return chunks;
 }
+
+export type RankedChunk = SourceChunk & {
+  score: number;
+  bm25Score: number;
+  semanticScore: number;
+};
 
 export function rankChunks(
   question: string,
   chunks: SourceChunk[],
   limit = 6,
-): (SourceChunk & { score: number })[] {
+): RankedChunk[] {
+  if (!chunks.length || !question.trim()) return [];
+
   const queryTerms = [...new Set(tokenize(question))];
-  if (!queryTerms.length) return [];
-  const docs = chunks.map((chunk) => ({ chunk, terms: tokenize(chunk.text) }));
+  const queryEmbedding = computeDenseEmbedding(question);
+
+  const docs = chunks.map((chunk) => {
+    if (!chunk.embedding || chunk.embedding.length === 0) {
+      chunk.embedding = computeDenseEmbedding(chunk.text);
+    }
+    return {
+      chunk,
+      terms: tokenize(chunk.text),
+      semanticScore: cosineSimilarity(queryEmbedding, chunk.embedding),
+    };
+  });
+
   const avgLength =
     docs.reduce((sum, item) => sum + item.terms.length, 0) /
     Math.max(docs.length, 1);
@@ -83,50 +108,93 @@ export function rankChunks(
   queryTerms.forEach((term) =>
     df.set(term, docs.filter((item) => item.terms.includes(term)).length),
   );
-  return docs
-    .map(({ chunk, terms }) => {
-      let score = 0;
-      for (const term of queryTerms) {
-        const frequency = terms.filter((item) => item === term).length;
-        if (!frequency) continue;
-        const idf = Math.log(
-          1 +
-          (docs.length - (df.get(term) ?? 0) + 0.5) /
-          ((df.get(term) ?? 0) + 0.5),
-        );
-        score +=
-          (idf * (frequency * 2.2)) /
-          (frequency +
-            1.2 * (0.25 + (0.75 * terms.length) / Math.max(avgLength, 1)));
-      }
-      const phrase = question.toLowerCase().trim();
-      const lowerText = chunk.text.toLowerCase();
-      if (phrase.length > 5 && lowerText.includes(phrase)) score += 4;
 
-      const isLookingForProcedure =
-        /step|procedure|how to|setup|priming|install/i.test(question) &&
-        !/troubleshoot|fault|problem|fail|leak|error/i.test(question);
+  const phrase = question.toLowerCase().trim();
+  const isLookingForProcedure =
+    /step|procedure|how to|setup|priming|install/i.test(question) &&
+    !/troubleshoot|fault|problem|fail|leak|error/i.test(question);
 
-      // Sub-phrase boosts for technical manuals & product comparisons
-      if (phrase.includes('model a') && lowerText.includes('model a')) score += 3.5;
-      if (phrase.includes('model b') && lowerText.includes('model b')) score += 3.5;
-      if (phrase.includes('priming') && lowerText.includes('priming procedure')) score += 6;
-      if (phrase.includes('model a') && lowerText.includes('manual priming procedure')) score += 8;
-      if (phrase.includes('step') && (lowerText.includes('step') || lowerText.includes('procedure'))) score += 3;
-      if (phrase.includes('spec') && lowerText.includes('specification')) score += 2;
-      if (phrase.includes('pressure') && lowerText.includes('pressure')) score += 1.5;
+  const scoredDocs = docs.map(({ chunk, terms, semanticScore }) => {
+    let bm25Score = 0;
+    for (const term of queryTerms) {
+      const frequency = terms.filter((item) => item === term).length;
+      if (!frequency) continue;
+      const idf = Math.log(
+        1 +
+        (docs.length - (df.get(term) ?? 0) + 0.5) /
+        ((df.get(term) ?? 0) + 0.5),
+      );
+      bm25Score +=
+        (idf * (frequency * 2.2)) /
+        (frequency +
+          1.2 * (0.25 + (0.75 * terms.length) / Math.max(avgLength, 1)));
+    }
 
-      // Penalize troubleshooting tables when user asks for setup/procedure steps
-      if (isLookingForProcedure && (lowerText.includes('troubleshooting guide') || lowerText.includes('symptompossible causeaction'))) {
-        score -= 8;
-      }
+    const lowerText = chunk.text.toLowerCase();
+    if (phrase.length > 5 && lowerText.includes(phrase)) bm25Score += 4;
 
-      return { ...chunk, score };
-    })
-    .filter((chunk) => chunk.score > 0)
+    if (phrase.includes('model a') && lowerText.includes('model a')) bm25Score += 3.5;
+    if (phrase.includes('model b') && lowerText.includes('model b')) bm25Score += 3.5;
+    if (phrase.includes('priming') && lowerText.includes('priming procedure')) bm25Score += 6;
+    if (phrase.includes('model a') && lowerText.includes('manual priming procedure')) bm25Score += 8;
+    if (phrase.includes('step') && (lowerText.includes('step') || lowerText.includes('procedure'))) bm25Score += 3;
+    if (phrase.includes('spec') && lowerText.includes('specification')) bm25Score += 2;
+    if (phrase.includes('pressure') && lowerText.includes('pressure')) bm25Score += 1.5;
+
+    if (isLookingForProcedure && (lowerText.includes('troubleshooting guide') || lowerText.includes('symptompossible causeaction'))) {
+      bm25Score -= 8;
+    }
+
+    return {
+      chunk,
+      bm25Score: Math.max(0, bm25Score),
+      semanticScore: Math.max(0, semanticScore),
+    };
+  });
+
+  const byBm25 = [...scoredDocs].sort((a, b) => b.bm25Score - a.bm25Score);
+  const bySemantic = [...scoredDocs].sort((a, b) => b.semanticScore - a.semanticScore);
+
+  const bm25RankMap = new Map<SourceChunk, number>();
+  byBm25.forEach((item, idx) => bm25RankMap.set(item.chunk, idx + 1));
+
+  const semanticRankMap = new Map<SourceChunk, number>();
+  bySemantic.forEach((item, idx) => semanticRankMap.set(item.chunk, idx + 1));
+
+  const maxBm25 = Math.max(...scoredDocs.map((d) => d.bm25Score), 0);
+  const maxSem = Math.max(...scoredDocs.map((d) => d.semanticScore), 1e-4);
+
+  const RRF_K = 60;
+  const results = scoredDocs.map(({ chunk, bm25Score, semanticScore }) => {
+    const rBM25 = bm25RankMap.get(chunk) ?? scoredDocs.length;
+    const rSem = semanticRankMap.get(chunk) ?? scoredDocs.length;
+
+    const rrfScore = (1 / (RRF_K + rBM25)) + (1 / (RRF_K + rSem));
+
+    const normBM25 = maxBm25 > 0 ? bm25Score / maxBm25 : 0;
+    const normSem = semanticScore / maxSem;
+
+    const linearScore = maxBm25 > 0
+      ? (0.55 * normBM25) + (0.45 * normSem)
+      : normSem;
+
+    const finalScore = (linearScore * 10) + (rrfScore * 40);
+
+    return {
+      ...chunk,
+      score: finalScore,
+      bm25Score,
+      semanticScore,
+    };
+  });
+
+  return results
+    .filter((c) => c.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
+
+export const rankChunksHybrid = rankChunks;
 
 function cleanAndFormatPassage(text: string): string {
   let cleaned = text;
