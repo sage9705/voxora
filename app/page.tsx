@@ -204,8 +204,8 @@ export default function Home() {
             <>
               {/* Split Mode: Side-by-Side Chat & Document Viewer */}
               {workspaceMode === 'split' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 flex-1 items-stretch min-h-[620px] mt-4 mb-5">
-                  <div className="flex flex-col min-w-0 h-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 flex-1 items-stretch h-[calc(100vh-130px)] min-h-[580px] mt-2 mb-4">
+                  <div className="flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
                     <ChatArea
                       documentsCount={documents.length}
                       documents={documents}
@@ -234,7 +234,7 @@ export default function Home() {
                     </ChatArea>
                   </div>
 
-                  <div className="flex flex-col min-w-0 h-full">
+                  <div className="flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
                     <DocumentViewer
                       documents={documents}
                       activeDocumentId={activeDocId}
@@ -252,7 +252,7 @@ export default function Home() {
 
               {/* Full Document Reader View */}
               {workspaceMode === 'reader' && (
-                <div className="flex-1 flex flex-col min-h-[680px] mt-4 mb-5">
+                <div className="flex-1 flex flex-col h-[calc(100vh-130px)] min-h-[580px] min-h-0 mt-2 mb-4 overflow-hidden">
                   <DocumentViewer
                     documents={documents}
                     activeDocumentId={activeDocId}
