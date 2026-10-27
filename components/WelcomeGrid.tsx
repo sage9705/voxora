@@ -72,13 +72,13 @@ export function WelcomeGrid({
           </button>
           <span className="text-[11.5px] text-muted-2 mt-3.5 [&>span]:px-1">
             PDF, Word, TXT, MD, CSV &amp; Excel <span>·</span> Multi-file support{' '}
-            <span>·</span> In-session processing
+            <span>·</span> Persistent workspace
           </span>
         </div>
         <div className="border-t border-line h-12 flex items-center justify-center gap-5 text-muted text-xs">
           <div className="flex items-center gap-[7px] [&>svg]:text-cyan">
             <Memory style={{ fontSize: 17 }} />
-            <span>Session-based processing</span>
+            <span>Persistent local storage</span>
           </div>
           <span className="h-4 w-px bg-line" />
           <div className="flex items-center gap-[7px] [&>svg]:text-cyan">
@@ -153,7 +153,7 @@ export function WelcomeGrid({
         </div>
 
         <div className="text-[11.5px] text-muted-2 pt-2 border-t border-line">
-          <span>Local session privacy &amp; in-memory processing</span>
+          <span>Local workspace privacy &amp; persistent storage</span>
         </div>
       </div>
 
