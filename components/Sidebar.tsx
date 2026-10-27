@@ -8,6 +8,7 @@ import Circle from '@mui/icons-material/Circle';
 import Close from '@mui/icons-material/Close';
 import DarkMode from '@mui/icons-material/DarkMode';
 import DeleteSweep from '@mui/icons-material/DeleteSweep';
+import FileDownload from '@mui/icons-material/FileDownload';
 import Forum from '@mui/icons-material/Forum';
 import GraphicEq from '@mui/icons-material/GraphicEq';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
@@ -20,6 +21,7 @@ import Security from '@mui/icons-material/Security';
 import UploadFile from '@mui/icons-material/UploadFile';
 import type { ChatMessage, DocumentRecord } from '@/lib/types';
 import { DocumentIcon, getFormatBadgeColor } from '@/components/DocumentIcon';
+import { downloadMarkdownReport, printPdfReport } from '@/lib/exportReport';
 
 function formatSize(bytes: number) {
   return bytes < 1024 * 1024
@@ -185,15 +187,38 @@ export function Sidebar({
       {showHistory && (
         <div className="mt-[5px] mr-0 mb-0 ml-[23px] pl-2.5 border-l border-line max-[760px]:hidden">
           {messages.length ? (
-            <button
-              className="bg-transparent border-0 text-text text-left grid grid-cols-[8px_1fr] gap-x-2 items-center py-2 text-[13px] w-full"
-              onClick={onToggleHistory}
-            >
-              <Circle style={{ fontSize: 7 }} className="text-accent" /> Current conversation{' '}
-              <small className="col-start-2 text-muted text-[11.5px] mt-[3px]">
-                {messages.filter((m) => m.role === 'user').length} questions
-              </small>
-            </button>
+            <div>
+              <button
+                className="bg-transparent border-0 text-text text-left grid grid-cols-[8px_1fr] gap-x-2 items-center py-2 text-[13px] w-full"
+                onClick={onToggleHistory}
+              >
+                <Circle style={{ fontSize: 7 }} className="text-accent" /> Current conversation{' '}
+                <small className="col-start-2 text-muted text-[11.5px] mt-[3px]">
+                  {messages.filter((m) => m.role === 'user').length} questions
+                </small>
+              </button>
+              <div className="flex items-center gap-2 mt-1 mb-2 pt-1.5 border-t border-line/60">
+                <button
+                  type="button"
+                  onClick={() => downloadMarkdownReport(messages, documents)}
+                  className="text-[11px] font-medium text-muted hover:text-accent flex items-center gap-1 hover:underline cursor-pointer"
+                  title="Export conversation as Markdown"
+                >
+                  <FileDownload style={{ fontSize: 13 }} />
+                  <span>Report (.md)</span>
+                </button>
+                <span className="text-muted-2 text-[10px]">&middot;</span>
+                <button
+                  type="button"
+                  onClick={() => printPdfReport(messages, documents)}
+                  className="text-[11px] font-medium text-muted hover:text-accent flex items-center gap-1 hover:underline cursor-pointer"
+                  title="Export conversation as PDF"
+                >
+                  <PictureAsPdf style={{ fontSize: 13 }} />
+                  <span>Report (.pdf)</span>
+                </button>
+              </div>
+            </div>
           ) : (
             <p className="text-[12.5px] text-muted leading-[1.5]">
               Your recent conversations will appear here.
