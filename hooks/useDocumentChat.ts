@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerSource, ChatMessage, DocumentRecord } from '@/lib/types';
 import { rankChunks } from '@/lib/retrieval';
+import {
+  clearStorageDocuments,
+  clearStorageMessages,
+  loadDocumentsFromStorage,
+  loadMessagesFromStorage,
+  removeDocumentFromStorage,
+  saveDocumentsToStorage,
+  saveMessagesToStorage,
+} from '@/lib/workspacePersistence';
 
 type ApiAnswer = {
   answer: string;
@@ -50,6 +59,47 @@ export function useDocumentChat() {
   const [uploading, setUploading] = useState(false);
   const [asking, setAsking] = useState(false);
   const [notice, setNotice] = useState('');
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    void (async () => {
+      try {
+        const [savedDocs, savedMsgs] = await Promise.all([
+          loadDocumentsFromStorage(),
+          loadMessagesFromStorage(),
+        ]);
+        if (isMounted) {
+          if (savedDocs.length > 0) {
+            setDocuments(savedDocs);
+          }
+          if (savedMsgs.length > 0) {
+            setMessages(savedMsgs);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to restore workspace session:', err);
+      } finally {
+        if (isMounted) {
+          setIsHydrated(true);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void saveDocumentsToStorage(documents);
+  }, [documents, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void saveMessagesToStorage(messages);
+  }, [messages, isHydrated]);
 
   const chunks = useMemo(
     () => documents.flatMap((doc) => doc.chunks || []),
@@ -182,16 +232,19 @@ export function useDocumentChat() {
 
   const removeDocument = useCallback((id: string, name: string) => {
     setDocuments((current) => current.filter((item) => item.id !== id));
-    setNotice(`${name} removed from this session.`);
+    void removeDocumentFromStorage(id);
+    setNotice(`${name} removed from your workspace.`);
   }, []);
 
   const clearAllDocuments = useCallback(() => {
     setDocuments([]);
-    setNotice('All documents removed from this session.');
+    void clearStorageDocuments();
+    setNotice('All documents removed from your workspace.');
   }, []);
 
   const clearConversation = useCallback(() => {
     setMessages([]);
+    void clearStorageMessages();
     setNotice(
       'Conversation cleared. Your loaded documents are still available.',
     );
@@ -331,5 +384,6 @@ export function useDocumentChat() {
     clearAllDocuments,
     clearConversation,
     askQuestion,
+    isHydrated,
   };
 }

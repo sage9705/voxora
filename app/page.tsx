@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Autorenew from '@mui/icons-material/Autorenew';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
 import { WelcomeGrid } from '@/components/WelcomeGrid';
@@ -46,6 +47,7 @@ export default function Home() {
     clearAllDocuments,
     clearConversation,
     askQuestion,
+    isHydrated,
   } = useDocumentChat();
 
   // Auto-select latest uploaded document
@@ -183,9 +185,16 @@ export default function Home() {
           }`}
         >
           {/* Show landing hero banner only when library is empty or in single-column chat mode */}
-          {!documents.length && <PageHeading />}
+          {isHydrated && !documents.length && <PageHeading />}
 
-          {!documents.length ? (
+          {!isHydrated ? (
+            <div className="flex-1 flex items-center justify-center min-h-[400px]">
+              <div className="flex items-center gap-2.5 text-muted text-sm font-medium">
+                <Autorenew className="animate-spin text-accent" style={{ fontSize: 20 }} />
+                <span>Restoring your workspace…</span>
+              </div>
+            </div>
+          ) : !documents.length ? (
             <WelcomeGrid
               uploading={uploading}
               onUploadFiles={uploadFiles}
