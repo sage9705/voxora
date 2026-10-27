@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerSource, ChatMessage, DocumentRecord } from '@/lib/types';
-import { SAMPLE_DOCUMENTS } from '@/lib/constants';
 import { rankChunks } from '@/lib/retrieval';
 
 type ApiAnswer = {
@@ -125,42 +124,6 @@ export function useDocumentChat() {
     },
     [documents],
   );
-
-  const loadSamples = useCallback(async () => {
-    setUploading(true);
-    setNotice('Loading the sample manuals…');
-
-    for (const sample of SAMPLE_DOCUMENTS) {
-      if (documents.some((doc) => doc.name === sample.name)) continue;
-      try {
-        const response = await fetch(sample.path);
-        const blob = await response.blob();
-        const file = new File([blob], sample.name, { type: 'application/pdf' });
-        const form = new FormData();
-        form.append('file', file);
-        const result = await fetch('/api/ingest', {
-          method: 'POST',
-          body: form,
-        });
-        const data = await result.json();
-        if (!result.ok) throw new Error(data.error || 'Could not load sample');
-        const newDoc = (data.document || data.documents?.[0]) as DocumentRecord;
-        if (newDoc) {
-          setDocuments((current) => [...current, newDoc]);
-        }
-      } catch (error) {
-        setNotice(
-          error instanceof Error
-            ? error.message
-            : 'Unable to load sample documents.',
-        );
-      }
-    }
-    setUploading(false);
-    setNotice(
-      'Sample manuals are ready. Try asking what changed between versions or compare Model A and B.',
-    );
-  }, [documents]);
 
   // If custom documents lack suggestedQuestions, fetch AI-extracted questions in background
   useEffect(() => {
@@ -364,7 +327,6 @@ export function useDocumentChat() {
     setNotice,
     chunks,
     uploadFiles,
-    loadSamples,
     removeDocument,
     clearAllDocuments,
     clearConversation,
