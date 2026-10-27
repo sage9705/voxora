@@ -253,7 +253,13 @@ export function ChatArea({
   }, [messages, asking]);
 
   return (
-    <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[480px] flex flex-col flex-1 mb-[25px] max-[760px]:min-h-[500px] max-[760px]:mb-4 transition-all">
+    <div
+      className={`border border-line bg-panel rounded-xl overflow-hidden flex flex-col flex-1 transition-all ${
+        splitViewActive
+          ? 'h-full min-h-0 mb-0'
+          : 'min-h-[480px] mb-[25px] max-[760px]:min-h-[500px] max-[760px]:mb-4'
+      }`}
+    >
       <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-4 sm:px-5 gap-2 max-[760px]:px-3.5">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 mr-1">
           <div className="w-8 h-8 sm:w-9 sm:h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent shrink-0">
@@ -374,7 +380,13 @@ export function ChatArea({
         </div>
       </div>
 
-      <div className="flex-1 min-h-[360px] max-h-[calc(100vh-360px)] overflow-y-auto py-6 px-[28px] max-[1050px]:py-5 max-[1050px]:px-[17px] max-[760px]:max-h-none max-[760px]:py-[18px] max-[760px]:px-3.5">
+      <div
+        className={`flex-1 overflow-y-auto py-6 px-[28px] max-[1050px]:py-5 max-[1050px]:px-[17px] max-[760px]:py-[18px] max-[760px]:px-3.5 ${
+          splitViewActive
+            ? 'min-h-0 max-h-none'
+            : 'min-h-[360px] max-h-[calc(100vh-360px)] max-[760px]:max-h-none'
+        }`}
+      >
         {!messages.length ? (
           <div className="max-w-[860px] mx-auto mt-5 mb-0 text-center max-[760px]:mt-3.5">
             <div className="h-14 w-14 grid place-items-center rounded-[18px] border border-line-strong bg-panel-raised text-accent mx-auto mb-4">
