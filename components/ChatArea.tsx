@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import {
-  ArrowUpRight,
-  AudioLines,
-  BookOpen,
-  History,
-  Trash2,
-  User,
-  Volume2,
-} from 'lucide-react';
+import Bolt from '@mui/icons-material/Bolt';
+import Circle from '@mui/icons-material/Circle';
+import DeleteOutline from '@mui/icons-material/DeleteOutlineOutlined';
+import Forum from '@mui/icons-material/Forum';
+import GraphicEq from '@mui/icons-material/GraphicEq';
+import MenuBook from '@mui/icons-material/MenuBook';
+import NorthEast from '@mui/icons-material/NorthEast';
+import Person from '@mui/icons-material/Person';
+import Token from '@mui/icons-material/Token';
+import VerticalSplit from '@mui/icons-material/VerticalSplit';
+import VolumeUp from '@mui/icons-material/VolumeUp';
 import type { ChatMessage } from '@/lib/types';
 
 type ChatAreaProps = {
@@ -23,10 +25,16 @@ type ChatAreaProps = {
   onClearConversation: () => void;
   onSelectStarter: (question: string) => void;
   onReadAloud: (text: string) => void;
+  onViewSource?: (documentId: string, page: number, excerpt?: string) => void;
+  onToggleSplitView?: () => void;
+  splitViewActive?: boolean;
   children?: React.ReactNode;
 };
 
-function parseInline(text: string): React.ReactNode[] {
+function parseInline(
+  text: string,
+  onPageClick?: (page: number) => void,
+): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const regex = /(\*\*[^*]+\*\*|\[Page\s*\d+\]|`[^`]+`)/g;
   let lastIdx = 0;
@@ -38,16 +46,35 @@ function parseInline(text: string): React.ReactNode[] {
     }
     const token = match[0];
     if (token.startsWith('**') && token.endsWith('**')) {
-      parts.push(<strong key={match.index}>{token.slice(2, -2)}</strong>);
-    } else if (token.startsWith('[Page') && token.endsWith(']')) {
       parts.push(
-        <span className="inline-page-badge" key={match.index}>
+        <strong className="font-semibold text-text" key={match.index}>
+          {token.slice(2, -2)}
+        </strong>,
+      );
+    } else if (token.startsWith('[Page') && token.endsWith(']')) {
+      const pageMatch = token.match(/\d+/);
+      const pageNum = pageMatch ? parseInt(pageMatch[0], 10) : undefined;
+      parts.push(
+        <button
+          type="button"
+          key={match.index}
+          onClick={() => pageNum && onPageClick?.(pageNum)}
+          className="inline-flex items-center py-px px-1.5 text-[11px] rounded bg-panel-raised border border-line-strong text-accent my-0 mx-[3px] font-mono hover:bg-accent hover:text-accent-ink transition-colors cursor-pointer"
+          title={
+            pageNum
+              ? `Jump to Page ${pageNum} in document reader`
+              : undefined
+          }
+        >
           {token.slice(1, -1)}
-        </span>,
+        </button>,
       );
     } else if (token.startsWith('`') && token.endsWith('`')) {
       parts.push(
-        <code className="inline-code" key={match.index}>
+        <code
+          className="font-mono text-[13px] py-0.5 px-[5px] rounded bg-panel-raised border border-line"
+          key={match.index}
+        >
           {token.slice(1, -1)}
         </code>,
       );
@@ -62,16 +89,26 @@ function parseInline(text: string): React.ReactNode[] {
   return parts.length ? parts : [text];
 }
 
-function FormattedContent({ content }: { content: string }) {
+function FormattedContent({
+  content,
+  onPageClick,
+}: {
+  content: string;
+  onPageClick?: (page: number) => void;
+}) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
-  let currentList: { type: 'ol' | 'ul'; items: React.ReactNode[] } | null = null;
+  let currentList: { type: 'ol' | 'ul'; items: React.ReactNode[] } | null =
+    null;
 
   const flushList = () => {
     if (currentList) {
       if (currentList.type === 'ol') {
         elements.push(
-          <ol key={`ol-${elements.length}`} className="formatted-steps">
+          <ol
+            key={`ol-${elements.length}`}
+            className="my-2 pl-[22px] flex flex-col gap-1.5 list-decimal [&>li]:leading-[1.6]"
+          >
             {currentList.items.map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
@@ -79,11 +116,14 @@ function FormattedContent({ content }: { content: string }) {
         );
       } else {
         elements.push(
-          <ul key={`ul-${elements.length}`} className="formatted-bullets">
+          <ul
+            key={`ul-${elements.length}`}
+            className="my-2 pl-[22px] flex flex-col gap-1.5 list-disc [&>li]:leading-[1.6]"
+          >
             {currentList.items.map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
-          </ul>,
+          </ul>
         );
       }
       currentList = null;
@@ -106,7 +146,7 @@ function FormattedContent({ content }: { content: string }) {
         flushList();
         currentList = { type: 'ol', items: [] };
       }
-      currentList.items.push(parseInline(numMatch[2]));
+      currentList.items.push(parseInline(numMatch[2], onPageClick));
       continue;
     }
 
@@ -117,7 +157,7 @@ function FormattedContent({ content }: { content: string }) {
         flushList();
         currentList = { type: 'ul', items: [] };
       }
-      currentList.items.push(parseInline(bulletMatch[1]));
+      currentList.items.push(parseInline(bulletMatch[1], onPageClick));
       continue;
     }
 
@@ -127,8 +167,11 @@ function FormattedContent({ content }: { content: string }) {
     if (trimmed.startsWith('>')) {
       const quoteText = trimmed.replace(/^>\s*/, '');
       elements.push(
-        <blockquote key={`q-${i}`} className="formatted-quote">
-          {parseInline(quoteText)}
+        <blockquote
+          key={`q-${i}`}
+          className="my-2.5 mx-0 mb-3 py-2.5 px-3.5 border-l-[3px] border-accent bg-panel-raised rounded-r-[7px] text-text text-sm"
+        >
+          {parseInline(quoteText, onPageClick)}
         </blockquote>,
       );
       continue;
@@ -138,8 +181,11 @@ function FormattedContent({ content }: { content: string }) {
     if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
       const headingText = trimmed.replace(/^#+\s*/, '');
       elements.push(
-        <h4 key={`h-${i}`} className="formatted-heading">
-          {parseInline(headingText)}
+        <h4
+          key={`h-${i}`}
+          className="text-[15px] font-bold my-3.5 mb-1.5 text-text tracking-[-0.2px] first:mt-0"
+        >
+          {parseInline(headingText, onPageClick)}
         </h4>,
       );
       continue;
@@ -147,15 +193,19 @@ function FormattedContent({ content }: { content: string }) {
 
     // Normal paragraph
     elements.push(
-      <p key={`p-${i}`} className="formatted-p">
-        {parseInline(trimmed)}
+      <p key={`p-${i}`} className="mt-0 mb-2.5 last:mb-0">
+        {parseInline(trimmed, onPageClick)}
       </p>,
     );
   }
 
   flushList();
 
-  return <div className="formatted-content">{elements}</div>;
+  return (
+    <div className="text-[15px] leading-[1.7] text-text [overflow-wrap:anywhere] max-[760px]:text-[14px]">
+      {elements}
+    </div>
+  );
 }
 
 export function ChatArea({
@@ -169,6 +219,9 @@ export function ChatArea({
   onClearConversation,
   onSelectStarter,
   onReadAloud,
+  onViewSource,
+  onToggleSplitView,
+  splitViewActive,
   children,
 }: ChatAreaProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -178,83 +231,133 @@ export function ChatArea({
   }, [messages, asking]);
 
   return (
-    <div className="chat-layout">
-      <div className="chat-toolbar">
-        <div className="chat-context">
-          <div className="context-icon">
-            <BookOpen size={17} />
+    <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[480px] flex flex-col flex-1 mb-[25px] max-[760px]:min-h-[500px] max-[760px]:mb-4 transition-all">
+      <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-5 max-[760px]:px-3.5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent">
+            <MenuBook style={{ fontSize: 18 }} />
           </div>
-          <div>
-            <strong>Document conversation</strong>
-            <span>
+          <div className="flex flex-col gap-1">
+            <strong className="text-[13.5px] font-semibold">
+              Document conversation
+            </strong>
+            <span className="text-xs text-muted max-[760px]:text-[11.5px] flex items-center">
               {documentsCount} {documentsCount === 1 ? 'document' : 'documents'}{' '}
-              in context <span className="context-dot" /> Ready to ask
+              in context <Circle style={{ fontSize: 7 }} className="text-[#9bd87c] mx-1.5" />{' '}
+              Ready to ask
             </span>
           </div>
         </div>
-        <div className="chat-toolbar-actions">
+        <div className="flex items-center gap-2">
+          {documentsCount > 0 && onToggleSplitView && (
+            <button
+              className={`h-[33px] flex items-center gap-1.5 border rounded-md text-xs px-2.5 transition-all duration-150 cursor-pointer ${
+                splitViewActive
+                  ? 'border-accent/50 bg-accent/15 text-accent font-semibold shadow-sm'
+                  : 'border-transparent bg-transparent text-muted hover:border-muted-2 hover:bg-panel-soft hover:text-text'
+              }`}
+              onClick={onToggleSplitView}
+              title={
+                splitViewActive
+                  ? 'Close side-by-side reader'
+                  : 'Open document side-by-side'
+              }
+            >
+              <VerticalSplit style={{ fontSize: 16 }} />{' '}
+              <span className="max-[760px]:hidden">
+                {splitViewActive ? 'Hide reader' : 'View document'}
+              </span>
+            </button>
+          )}
           <button
-            className={`quiet-button ${autoSpeak ? 'active' : ''}`}
+            className={`h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px] ${
+              autoSpeak
+                ? 'border-muted-2 bg-panel-soft text-text'
+                : 'text-muted'
+            }`}
             onClick={onToggleAutoSpeak}
-            title={autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'}
+            title={
+              autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'
+            }
           >
-            <Volume2 size={15} />{' '}
+            <VolumeUp style={{ fontSize: 16 }} />{' '}
             {autoSpeak ? 'Voice answers: On' : 'Voice answers: Off'}
           </button>
-          <button className="quiet-button" onClick={onToggleHistory}>
-            <History size={15} /> History
+          <button
+            className="h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-muted text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
+            onClick={onToggleHistory}
+          >
+            <Forum style={{ fontSize: 16 }} /> History
           </button>
           <button
-            className="icon-button"
+            className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text transition-colors"
             onClick={onClearConversation}
             title="Clear conversation"
           >
-            <Trash2 size={16} />
+            <DeleteOutline style={{ fontSize: 18 }} />
           </button>
         </div>
       </div>
 
-      <div className="conversation-area">
+      <div className="flex-1 min-h-[360px] max-h-[calc(100vh-360px)] overflow-y-auto py-6 px-[28px] max-[1050px]:py-5 max-[1050px]:px-[17px] max-[760px]:max-h-none max-[760px]:py-[18px] max-[760px]:px-3.5">
         {!messages.length ? (
-          <div className="conversation-empty">
-            <div className="conversation-orb">
-              <AudioLines size={27} />
+          <div className="max-w-[860px] mx-auto mt-5 mb-0 text-center max-[760px]:mt-3.5">
+            <div className="h-14 w-14 grid place-items-center rounded-[18px] border border-line-strong bg-panel-raised text-accent mx-auto mb-4">
+              <GraphicEq style={{ fontSize: 30 }} />
             </div>
-            <h2>Let&apos;s find something.</h2>
-            <p>
+            <h2 className="font-heading font-semibold text-[22px] tracking-[-0.7px] mt-0 mb-2.5">
+              Let&apos;s find something.
+            </h2>
+            <p className="text-sm text-muted mt-0 mb-6">
               Ask a question about your documents or start with one of these.
             </p>
-            <div className="starter-list">
+            <div className="grid grid-cols-3 gap-[11px] text-left max-[1050px]:grid-cols-2 max-[760px]:grid-cols-1">
               {starters.map((item) => (
                 <button
-                  key={item.label}
-                  className="starter-button"
+                  key={`${item.label}-${item.question}`}
+                  className="relative min-h-[104px] py-3.5 px-[13px] border border-line bg-panel-raised rounded-[9px] text-text text-left flex flex-col gap-2.5 transition-[border-color,transform] duration-150 hover:border-line-strong hover:-translate-y-px max-[760px]:min-h-[68px] max-[760px]:gap-2"
                   onClick={() => onSelectStarter(item.question)}
                 >
-                  <span>{item.label}</span>
-                  <strong>{item.question}</strong>
-                  <ArrowUpRight size={16} />
+                  <span className="font-mono font-semibold text-[11px] text-accent uppercase tracking-[0.3px]">
+                    {item.label}
+                  </span>
+                  <strong className="text-[13px] leading-[1.5] font-medium max-w-[calc(100%-14px)] max-[760px]:max-w-[90%] max-[760px]:text-[12.5px]">
+                    {item.question}
+                  </strong>
+                  <NorthEast
+                    style={{ fontSize: 16 }}
+                    className="absolute right-[11px] top-[11px] text-muted-2"
+                  />
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="message-list">
+          <div className="flex flex-col gap-[25px] max-w-[1080px] mx-auto my-0">
             {messages.map((message) => (
-              <div className={`message-row ${message.role}`} key={message.id}>
-                <div className={`message-avatar ${message.role}`}>
+              <div
+                className="flex items-start gap-[13px] max-[760px]:gap-2.5"
+                key={message.id}
+              >
+                <div
+                  className={`h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] ${
+                    message.role === 'assistant'
+                      ? 'bg-accent text-accent-ink'
+                      : 'bg-panel-soft border border-line-strong text-muted'
+                  }`}
+                >
                   {message.role === 'assistant' ? (
-                    <AudioLines size={17} />
+                    <GraphicEq style={{ fontSize: 20 }} />
                   ) : (
-                    <User size={16} />
+                    <Person style={{ fontSize: 18 }} />
                   )}
                 </div>
-                <div className="message-body">
-                  <div className="message-meta">
-                    <strong>
+                <div className="flex-1 min-w-0">
+                  <div className="min-h-[26px] flex flex-wrap items-center gap-x-2.5 gap-y-2 mb-1.5">
+                    <strong className="text-[13px] font-bold">
                       {message.role === 'assistant' ? 'Voxora' : 'You'}
                     </strong>
-                    <span>
+                    <span className="text-xs text-muted-2">
                       {new Date(message.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -262,34 +365,37 @@ export function ChatArea({
                     </span>
                     {message.role === 'assistant' && (
                       <>
-                        {message.mode === 'local' ? (
-                          <span className="mode-pill">Local retrieval</span>
-                        ) : (
-                          <span className="mode-pill">AI grounded</span>
-                        )}
+                        <span className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted">
+                          {message.mode === 'local'
+                            ? 'Local retrieval'
+                            : 'AI grounded'}
+                        </span>
                         {message.latencyMs !== undefined && (
                           <span
-                            className="mode-pill"
+                            className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Processing latency"
                           >
-                            ⚡ {message.latencyMs}ms
+                            <Bolt style={{ fontSize: 13 }} className="text-accent" />{' '}
+                            {message.latencyMs}ms
                           </span>
                         )}
                         {message.audioLatencyMs !== undefined && (
                           <span
-                            className="mode-pill"
+                            className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                             title="Question to first audible answer"
                           >
-                            🔊 {message.audioLatencyMs}ms to audio
+                            <VolumeUp style={{ fontSize: 13 }} className="text-accent" />{' '}
+                            {message.audioLatencyMs}ms to audio
                           </span>
                         )}
                         {message.usage &&
                           message.usage.totalTokens !== undefined &&
                           message.usage.totalTokens > 0 && (
                             <span
-                              className="mode-pill"
+                              className="py-[3px] px-[7px] border border-line rounded text-[11px] text-muted inline-flex items-center gap-1"
                               title={`Prompt: ${message.usage.promptTokens ?? 0}, Completion: ${message.usage.completionTokens ?? 0}`}
                             >
+                              <Token style={{ fontSize: 13 }} className="text-accent" />
                               {message.usage.totalTokens} tokens · est. $
                               {message.usage.estimatedCostUsd !== undefined
                                 ? message.usage.estimatedCostUsd.toFixed(5)
@@ -299,37 +405,64 @@ export function ChatArea({
                       </>
                     )}
                   </div>
-                  <div className="message-text">
-                    <FormattedContent content={message.content} />
-                  </div>
+                  <FormattedContent
+                    content={message.content}
+                    onPageClick={(page) => onViewSource?.('', page)}
+                  />
                   {message.role === 'assistant' && (
-                    <div className="message-actions">
-                      <button onClick={() => onReadAloud(message.content)}>
-                        <Volume2 size={14} /> Read aloud
+                    <div className="flex items-center gap-3.5 mt-2.5">
+                      <button
+                        className="flex items-center gap-1.5 border-0 bg-transparent p-0 text-muted text-xs transition-colors duration-150 hover:text-accent cursor-pointer"
+                        onClick={() => onReadAloud(message.content)}
+                      >
+                        <VolumeUp style={{ fontSize: 15 }} /> Read aloud
                       </button>
                       {message.sources?.length ? (
-                        <span>
-                          <BookOpen size={14} /> {message.sources.length} sources
+                        <span className="flex items-center gap-1.5 text-muted text-xs">
+                          <MenuBook style={{ fontSize: 15 }} /> {message.sources.length}{' '}
+                          sources
                         </span>
                       ) : null}
                     </div>
                   )}
                   {message.sources && message.sources.length > 0 && (
-                    <div className="sources-panel">
-                      <div className="sources-heading">
+                    <div className="mt-3.5 border border-line rounded-[9px] overflow-hidden bg-panel-raised">
+                      <div className="h-[34px] flex items-center justify-between px-3 border-b border-line font-mono font-semibold text-[11px] tracking-[0.7px] text-muted">
                         <span>REFERENCES</span>
-                        <span>{message.sources.length} passages</span>
+                        <span className="tracking-normal normal-case">
+                          {message.sources.length} passages
+                        </span>
                       </div>
                       {message.sources.map((source, index) => (
                         <div
-                          className="source-row"
+                          className="flex gap-2.5 py-[11px] px-3 border-b border-line last:border-b-0 hover:bg-panel-soft transition-colors cursor-pointer group/ref"
                           key={`${source.documentId}-${source.page}-${index}`}
+                          onClick={() =>
+                            onViewSource?.(
+                              source.documentId,
+                              source.page,
+                              source.excerpt,
+                            )
+                          }
+                          title="Click to view and highlight in document reader"
                         >
-                          <div className="source-number">{index + 1}</div>
-                          <div className="source-content">
-                            <strong>{source.documentName}</strong>
-                            <span>Page {source.page}</span>
-                            <p>
+                          <div className="h-[22px] w-[22px] flex-[0_0_22px] grid place-items-center border border-line-strong rounded-[5px] font-mono font-semibold text-[11px] text-accent group-hover/ref:bg-accent group-hover/ref:text-accent-ink transition-colors">
+                            {index + 1}
+                          </div>
+                          <div className="min-w-0 flex-1 grid grid-cols-[minmax(0,1fr)_auto] gap-x-2.5 gap-y-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <strong className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap max-[760px]:whitespace-normal group-hover/ref:text-accent transition-colors">
+                                {source.documentName}
+                              </strong>
+                              <NorthEast
+                                style={{ fontSize: 13 }}
+                                className="text-muted-2 group-hover/ref:text-accent opacity-0 group-hover/ref:opacity-100 transition-opacity"
+                              />
+                            </div>
+                            <span className="text-xs text-muted font-mono">
+                              Page {source.page}
+                            </span>
+                            <p className="col-span-full text-[13px] leading-[1.6] text-muted mt-[3px] mb-0">
                               &ldquo;{source.excerpt}
                               {source.excerpt.length >= 260 ? '…' : ''}&rdquo;
                             </p>
@@ -342,19 +475,19 @@ export function ChatArea({
               </div>
             ))}
             {asking && (
-              <div className="message-row assistant">
-                <div className="message-avatar assistant">
-                  <AudioLines size={17} />
+              <div className="flex items-start gap-[13px] max-[760px]:gap-2.5">
+                <div className="h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] bg-accent text-accent-ink">
+                  <GraphicEq style={{ fontSize: 20 }} />
                 </div>
-                <div className="message-body">
-                  <div className="message-meta">
-                    <strong>Voxora</strong>
-                    <span>Thinking</span>
+                <div className="flex-1 min-w-0">
+                  <div className="min-h-[26px] flex flex-wrap items-center gap-x-2.5 gap-y-2 mb-1.5">
+                    <strong className="text-[13px] font-bold">Voxora</strong>
+                    <span className="text-xs text-muted-2">Thinking</span>
                   </div>
-                  <div className="thinking">
-                    <span />
-                    <span />
-                    <span />
+                  <div className="flex gap-[5px] py-3 px-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent animate-[pulse_1.1s_infinite_ease-in-out]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent animate-[pulse_1.1s_infinite_ease-in-out] [animation-delay:0.15s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent animate-[pulse_1.1s_infinite_ease-in-out] [animation-delay:0.3s]" />
                   </div>
                 </div>
               </div>

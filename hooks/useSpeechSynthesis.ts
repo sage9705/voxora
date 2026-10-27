@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * Strip markdown formatting so the browser speech engine reads
@@ -9,39 +9,56 @@ import { useCallback, useEffect } from 'react';
 function stripMarkdown(md: string): string {
   return (
     md
-      // Remove fenced code blocks (``` … ```)
       .replace(/```[\s\S]*?```/g, '')
-      // Remove inline code (`…`)
       .replace(/`([^`]*)`/g, '$1')
-      // Remove images ![alt](url)
       .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-      // Remove links [text](url) → keep text
       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-      // Remove headings (### … )
       .replace(/^#{1,6}\s+/gm, '')
-      // Remove bold+italic (***text*** or ___text___)
       .replace(/\*{3}(.+?)\*{3}/g, '$1')
       .replace(/_{3}(.+?)_{3}/g, '$1')
-      // Remove bold (**text** or __text__)
       .replace(/\*{2}(.+?)\*{2}/g, '$1')
       .replace(/_{2}(.+?)_{2}/g, '$1')
-      // Remove italic (*text* or _text_)
       .replace(/\*(.+?)\*/g, '$1')
       .replace(/_(.+?)_/g, '$1')
-      // Remove strikethrough (~~text~~)
       .replace(/~~(.+?)~~/g, '$1')
-      // Remove blockquotes (> …)
       .replace(/^\s*>\s?/gm, '')
-      // Remove horizontal rules (---, ***, ___)
       .replace(/^[-*_]{3,}\s*$/gm, '')
-      // Remove unordered list markers (- , * , + )
       .replace(/^\s*[-*+]\s+/gm, '')
-      // Remove ordered list markers (1. , 2. , etc.)
       .replace(/^\s*\d+\.\s+/gm, '')
-      // Collapse multiple blank lines to a single pause
       .replace(/\n{3,}/g, '\n\n')
       .trim()
   );
+}
+
+function selectBestVoice(availableVoices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  if (!availableVoices.length) return null;
+
+  const englishVoices = availableVoices.filter((v) => v.lang.toLowerCase().startsWith('en'));
+  const pool = englishVoices.length > 0 ? englishVoices : availableVoices;
+
+  const priorityPatterns = [
+    /natural.*online/i,
+    /online.*natural/i,
+    /natural/i,
+    /neural/i,
+    /google\s+us\s+english/i,
+    /google\s+uk\s+english/i,
+    /google/i,
+    /samantha/i,
+    /karen/i,
+    /daniel/i,
+    /serena/i,
+    /aria/i,
+    /jenny/i,
+    /guy/i,
+  ];
+
+  for (const pattern of priorityPatterns) {
+    const match = pool.find((v) => pattern.test(v.name));
+    if (match) return match;
+  }
+
+  return pool.find((v) => v.default) || pool[0] || null;
 }
 
 interface UseSpeechSynthesisOptions {
@@ -49,6 +66,28 @@ interface UseSpeechSynthesisOptions {
 }
 
 export function useSpeechSynthesis(options?: UseSpeechSynthesisOptions) {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return;
+    }
+
+    const loadVoices = () => {
+      const available = window.speechSynthesis.getVoices();
+      if (available.length > 0) {
+        setVoices(available);
+      }
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+    };
+  }, []);
+
   const cancel = useCallback(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -56,7 +95,7 @@ export function useSpeechSynthesis(options?: UseSpeechSynthesisOptions) {
   }, []);
 
   const speak = useCallback(
-    (text: string, rate = 1.05) => {
+    (text: string, rate = 1.0) => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         options?.onError?.('Speech playback is not supported in this browser.');
         return;
@@ -64,10 +103,21 @@ export function useSpeechSynthesis(options?: UseSpeechSynthesisOptions) {
       window.speechSynthesis.cancel();
       const cleanText = stripMarkdown(text);
       const utterance = new SpeechSynthesisUtterance(cleanText);
+
+      const availableVoices =
+        voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+      const bestVoice = selectBestVoice(availableVoices);
+
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        utterance.lang = bestVoice.lang;
+      }
+
       utterance.rate = rate;
+      utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     },
-    [options],
+    [options, voices],
   );
 
   useEffect(() => {

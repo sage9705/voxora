@@ -1,50 +1,10 @@
 import { NextResponse } from 'next/server';
-import pdf from 'pdf-parse';
+import Groq from 'groq-sdk';
 import { splitIntoChunks } from '@/lib/retrieval';
+import { detectDocumentFormat, parseDocumentFile } from '@/lib/documentParser';
 import type { DocumentRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
-
-type PdfTextItem = {
-  str: string;
-  transform: number[];
-};
-
-type PdfPageData = {
-  getTextContent(options: {
-    normalizeWhitespace: boolean;
-    disableCombineTextItems: boolean;
-  }): Promise<{ items: PdfTextItem[] }>;
-};
-
-// Custom page renderer that injects a standard page break delimiter
-// so that page numbers and passage citations remain accurate
-function renderPageWithMarker(pageData: PdfPageData) {
-  return pageData
-    .getTextContent({
-      normalizeWhitespace: false,
-      disableCombineTextItems: false,
-    })
-    .then((textContent) => {
-      let lastY: number | undefined;
-      let text = '';
-      for (const item of textContent.items) {
-        if (!item.str) continue;
-        if (lastY === undefined || lastY === item.transform[5]) {
-          const needsSpace =
-            text.length > 0 &&
-            !text.endsWith(' ') &&
-            !text.endsWith('\n') &&
-            !item.str.startsWith(' ');
-          text += (needsSpace ? ' ' : '') + item.str;
-        } else {
-          text += (text.length > 0 && !text.endsWith('\n') ? '\n' : '') + item.str;
-        }
-        lastY = item.transform[5];
-      }
-      return `\n---PAGE BREAK---\n${text}`;
-    });
-}
 
 export async function POST(request: Request) {
   const startTime = Date.now();
@@ -59,7 +19,10 @@ export async function POST(request: Request) {
 
     if (files.length === 0) {
       return NextResponse.json(
-        { error: 'Please upload at least one PDF file.' },
+        {
+          error:
+            'Please upload at least one document (PDF, Word, TXT, Markdown, CSV, or Excel).',
+        },
         { status: 400 },
       );
     }
@@ -68,32 +31,35 @@ export async function POST(request: Request) {
 
     for (const file of files) {
       const docStartTime = Date.now();
-      const isPdf =
-        file.type === 'application/pdf' ||
-        file.name.toLowerCase().endsWith('.pdf');
+      const format = detectDocumentFormat(file.name, file.type);
 
-      if (!isPdf) {
+      if (!format) {
         return NextResponse.json(
-          { error: `${file.name} is not a PDF file.` },
+          {
+            error: `"${file.name}" has an unsupported format. Supported formats: PDF (.pdf), Word (.docx), Plain text (.txt), Markdown (.md), and Sheets (.csv, .xlsx, .xls).`,
+          },
           { status: 400 },
         );
       }
 
-      if (file.size > 8 * 1024 * 1024) {
+      if (file.size > 50 * 1024 * 1024) {
         return NextResponse.json(
-          { error: `${file.name} exceeds the 8 MB upload limit.` },
+          { error: `${file.name} exceeds the 50 MB upload limit.` },
           { status: 413 },
         );
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      const parsed = await pdf(buffer, { pagerender: renderPageWithMarker });
-      const text = parsed.text.replace(/\u0000/g, '').trim();
+      const { text, pages } = await parseDocumentFile(
+        buffer,
+        file.name,
+        file.type,
+      );
 
-      if (text.length < 30) {
+      if (text.length < 10) {
         return NextResponse.json(
           {
-            error: `No readable text was found in ${file.name}. The PDF may be scanned; OCR is not included.`,
+            error: `No readable text was found in ${file.name}. The file may be empty or contain non-text media.`,
           },
           { status: 422 },
         );
@@ -105,15 +71,68 @@ export async function POST(request: Request) {
           : `${Date.now()}-${Math.random()}`;
 
       const chunks = splitIntoChunks(text, docId, file.name);
+
+      let suggestedQuestions:
+        Array<{ label: string; question: string }> | undefined;
+      const rawApiKey = process.env.GROQ_API_KEY?.trim().replace(
+        /^["']|["']$/g,
+        '',
+      );
+      const selectedModel =
+        process.env.GROQ_MODEL?.trim().replace(/^["']|["']$/g, '') ||
+        'qwen/qwen3.8-27b';
+
+      if (rawApiKey) {
+        try {
+          const groq = new Groq({ apiKey: rawApiKey });
+          const completion = await groq.chat.completions.create({
+            model: selectedModel,
+            temperature: 0.2,
+            max_tokens: 350,
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an expert document assistant. Given the title and excerpt of an uploaded document, generate 3 to 4 concise, highly relevant questions that a user would naturally ask about this specific document (e.g. for a CV/resume, ask about the candidate\'s background, technical skills, or roles; for a financial or business doc or spreadsheet, ask about key metrics or summary; for a manual or guide, ask about setup or operation). Return strictly a JSON object with a "questions" key containing an array of objects with "label" (2-3 words) and "question" (the question text).',
+              },
+              {
+                role: 'user',
+                content: `Document Name: ${file.name}\n\nExcerpt:\n${text.slice(0, 3500)}`,
+              },
+            ],
+          });
+
+          const content = completion.choices[0]?.message?.content?.trim();
+          if (content) {
+            const parsedJson = JSON.parse(content);
+            if (Array.isArray(parsedJson.questions)) {
+              suggestedQuestions = parsedJson.questions
+                .filter(
+                  (q: unknown): q is { label: string; question: string } =>
+                    Boolean(q) &&
+                    typeof (q as { label?: unknown }).label === 'string' &&
+                    typeof (q as { question?: unknown }).question === 'string',
+                )
+                .slice(0, 4);
+            }
+          }
+        } catch (aiErr) {
+          console.warn('AI starter generation skipped:', aiErr);
+        }
+      }
+
       const ingestTimeMs = Date.now() - docStartTime;
 
       documents.push({
         id: docId,
         name: file.name,
         size: file.size,
-        pages: parsed.numpages || 1,
+        pages,
         text,
+        format,
         chunks,
+        suggestedQuestions,
         addedAt: Date.now(),
         ingestTimeMs,
       });
@@ -127,12 +146,14 @@ export async function POST(request: Request) {
       totalIngestTimeMs,
     });
   } catch (error) {
-    console.error('PDF ingestion failed:', error);
+    console.error('Document ingestion failed:', error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to process uploaded files.';
 
     return NextResponse.json(
-      { error: 'Failed to process the uploaded PDF files.' },
+      { error: errorMessage },
       { status: 500 },
     );
   }
 }
-
