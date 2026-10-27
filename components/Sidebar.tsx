@@ -170,7 +170,7 @@ export function Sidebar({
       <div className="font-mono font-semibold text-[11px] tracking-[1.15px] text-muted-2 pt-7 px-2.5 pb-2.5 max-[760px]:hidden">
         WORKSPACE
       </div>
-      <button className="h-10 flex items-center gap-2.5 px-2.5 text-text font-semibold border-0 bg-[color-mix(in_srgb,var(--accent)_10%,var(--panel))] rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 max-[760px]:hidden">
+      <button className="h-10 flex items-center gap-2.5 px-2.5 mb-2.5 text-text font-semibold border-0 bg-[color-mix(in_srgb,var(--accent)_10%,var(--panel))] rounded-[7px] text-left text-[13.5px] transition-[background,color] duration-150 max-[760px]:hidden">
         <MenuBook style={{ fontSize: 18 }} className="text-accent" /> Document chat
       </button>
       <button
