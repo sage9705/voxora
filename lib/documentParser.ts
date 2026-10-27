@@ -6,6 +6,8 @@ import type { DocumentFormat } from './types';
 type PdfTextItem = {
   str: string;
   transform: number[];
+  width?: number;
+  height?: number;
 };
 
 type PdfPageData = {
@@ -15,8 +17,133 @@ type PdfPageData = {
   }): Promise<{ items: PdfTextItem[] }>;
 };
 
-// Custom page renderer that injects a standard page break delimiter
-// so that page numbers and passage citations remain accurate
+type TextItemOnLine = {
+  x: number;
+  y: number;
+  str: string;
+  width: number;
+};
+
+type LineCluster = {
+  y: number;
+  items: TextItemOnLine[];
+};
+
+function cleanLineText(line: string): string {
+  return line
+    .replace(/\u0000/g, '')
+    .replace(/^(?:\[\]|\[\s*\]|[\uF000-\uF8FF\u25A0-\u25CF\u2022\u25AA\u25BA\u2043\u2219])\s*/, '• ')
+    .replace(/([a-zA-Z0-9])\s*-\s*([a-zA-Z0-9])/g, '$1-$2')
+    .replace(/\s+([,.:;?!])/g, '$1')
+    .trim();
+}
+
+function processPageItems(items: PdfTextItem[]): string {
+  if (!items || items.length === 0) return '';
+
+  const validItems: TextItemOnLine[] = [];
+  for (const item of items) {
+    if (!item.str || !item.transform) continue;
+    validItems.push({
+      x: item.transform[4],
+      y: item.transform[5],
+      str: item.str,
+      width: item.width ?? 0,
+    });
+  }
+
+  if (validItems.length === 0) return '';
+
+  const lines: LineCluster[] = [];
+  const lineTolerance = 3.5;
+
+  for (const item of validItems) {
+    let matchedLine = lines.find((l) => Math.abs(l.y - item.y) <= lineTolerance);
+    if (!matchedLine) {
+      matchedLine = { y: item.y, items: [] };
+      lines.push(matchedLine);
+    }
+    matchedLine.items.push(item);
+  }
+
+  lines.sort((a, b) => b.y - a.y);
+
+  const formattedLines: string[] = [];
+  for (const line of lines) {
+    line.items.sort((a, b) => a.x - b.x);
+
+    let lineStr = '';
+    for (let i = 0; i < line.items.length; i++) {
+      const cur = line.items[i];
+      if (i === 0) {
+        lineStr += cur.str;
+      } else {
+        const prev = line.items[i - 1];
+        const gap = cur.x - (prev.x + prev.width);
+        const needsSpace =
+          gap > 1.5 &&
+          !lineStr.endsWith(' ') &&
+          !cur.str.startsWith(' ') &&
+          !lineStr.endsWith('-') &&
+          !cur.str.startsWith('-');
+        lineStr += (needsSpace ? ' ' : '') + cur.str;
+      }
+    }
+
+    const cleaned = cleanLineText(lineStr);
+    if (cleaned) {
+      formattedLines.push(cleaned);
+    }
+  }
+
+  const paragraphs: string[] = [];
+  let currentPara = '';
+
+  for (let i = 0; i < formattedLines.length; i++) {
+    const line = formattedLines[i];
+    const isHeading =
+      /^[A-Z0-9\s/&,.-]{4,45}$/.test(line) &&
+      !line.endsWith('.') &&
+      !line.startsWith('•');
+    const isBullet =
+      line.startsWith('•') ||
+      /^[-*]\s+/.test(line) ||
+      /^\d+[\.\)]\s+/.test(line);
+
+    if (isHeading || isBullet) {
+      if (currentPara.trim()) {
+        paragraphs.push(currentPara.trim());
+        currentPara = '';
+      }
+      paragraphs.push(line);
+      continue;
+    }
+
+    if (!currentPara) {
+      currentPara = line;
+    } else if (currentPara.endsWith('-') && !currentPara.endsWith('--')) {
+      currentPara = currentPara.slice(0, -1) + line;
+    } else {
+      const prevEndsSentence = /[.!?:]$/.test(currentPara);
+      const nextStartsCap = /^[A-Z]/.test(line);
+      const isShortLine = currentPara.length < 50;
+
+      if (prevEndsSentence && (nextStartsCap || isShortLine)) {
+        paragraphs.push(currentPara.trim());
+        currentPara = line;
+      } else {
+        currentPara += ' ' + line;
+      }
+    }
+  }
+
+  if (currentPara.trim()) {
+    paragraphs.push(currentPara.trim());
+  }
+
+  return paragraphs.join('\n\n');
+}
+
 function renderPdfPageWithMarker(pageData: PdfPageData) {
   return pageData
     .getTextContent({
@@ -24,24 +151,8 @@ function renderPdfPageWithMarker(pageData: PdfPageData) {
       disableCombineTextItems: false,
     })
     .then((textContent) => {
-      let lastY: number | undefined;
-      let text = '';
-      for (const item of textContent.items) {
-        if (!item.str) continue;
-        if (lastY === undefined || lastY === item.transform[5]) {
-          const needsSpace =
-            text.length > 0 &&
-            !text.endsWith(' ') &&
-            !text.endsWith('\n') &&
-            !item.str.startsWith(' ');
-          text += (needsSpace ? ' ' : '') + item.str;
-        } else {
-          text +=
-            (text.length > 0 && !text.endsWith('\n') ? '\n' : '') + item.str;
-        }
-        lastY = item.transform[5];
-      }
-      return `\n---PAGE BREAK---\n${text}`;
+      const pageText = processPageItems(textContent.items as PdfTextItem[]);
+      return `\n---PAGE BREAK---\n${pageText}`;
     });
 }
 
@@ -120,11 +231,13 @@ export async function parseDocumentFile(
       const parsed = await pdf(buffer, {
         pagerender: renderPdfPageWithMarker,
       });
-      const text = parsed.text.replace(/\u0000/g, '').trim();
-      const pages = Math.max(
-        parsed.numpages || 1,
-        text.split(/\n\s*---\s*PAGE\s*BREAK\s*---\s*\n|\f/i).filter(Boolean).length || 1,
-      );
+      const rawText = parsed.text.replace(/\u0000/g, '').trim();
+      const rawPages = rawText
+        .split(/(?:^|\n)\s*---\s*PAGE\s*BREAK\s*---\s*(?:\n|$)/i)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+      const text = rawPages.join('\n---PAGE BREAK---\n');
+      const pages = Math.max(parsed.numpages || 1, rawPages.length, 1);
       return { text, pages, format };
     }
 
