@@ -4,6 +4,7 @@ export type SourceChunk = {
   documentName: string;
   page: number;
   text: string;
+  embedding?: number[];
 };
 
 export type DocumentFormat = 'pdf' | 'docx' | 'txt' | 'md' | 'csv' | 'xlsx';
