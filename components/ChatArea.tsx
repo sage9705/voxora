@@ -1,21 +1,27 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Bolt from '@mui/icons-material/Bolt';
 import Circle from '@mui/icons-material/Circle';
 import DeleteOutline from '@mui/icons-material/DeleteOutlineOutlined';
+import Description from '@mui/icons-material/Description';
+import FileDownload from '@mui/icons-material/FileDownload';
 import Forum from '@mui/icons-material/Forum';
 import GraphicEq from '@mui/icons-material/GraphicEq';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import MenuBook from '@mui/icons-material/MenuBook';
 import NorthEast from '@mui/icons-material/NorthEast';
 import Person from '@mui/icons-material/Person';
+import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
 import Token from '@mui/icons-material/Token';
 import VerticalSplit from '@mui/icons-material/VerticalSplit';
 import VolumeUp from '@mui/icons-material/VolumeUp';
-import type { ChatMessage } from '@/lib/types';
+import type { ChatMessage, DocumentRecord } from '@/lib/types';
+import { downloadMarkdownReport, printPdfReport } from '@/lib/exportReport';
 
 type ChatAreaProps = {
   documentsCount: number;
+  documents?: DocumentRecord[];
   messages: ChatMessage[];
   asking: boolean;
   autoSpeak: boolean;
@@ -139,7 +145,6 @@ function FormattedContent({
       continue;
     }
 
-    // Numbered lists e.g. "1. Step description"
     const numMatch = trimmed.match(/^(\d+)[\.\)]\s+(.+)$/);
     if (numMatch) {
       if (!currentList || currentList.type !== 'ol') {
@@ -150,7 +155,6 @@ function FormattedContent({
       continue;
     }
 
-    // Bullet lists e.g. "- Description" or "* Description"
     const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
     if (bulletMatch) {
       if (!currentList || currentList.type !== 'ul') {
@@ -163,7 +167,7 @@ function FormattedContent({
 
     flushList();
 
-    // Blockquote e.g. "> Warning: ..."
+
     if (trimmed.startsWith('>')) {
       const quoteText = trimmed.replace(/^>\s*/, '');
       elements.push(
@@ -177,7 +181,6 @@ function FormattedContent({
       continue;
     }
 
-    // Headers e.g. "### Heading"
     if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
       const headingText = trimmed.replace(/^#+\s*/, '');
       elements.push(
@@ -191,7 +194,6 @@ function FormattedContent({
       continue;
     }
 
-    // Normal paragraph
     elements.push(
       <p key={`p-${i}`} className="mt-0 mb-2.5 last:mb-0">
         {parseInline(trimmed, onPageClick)}
@@ -210,6 +212,7 @@ function FormattedContent({
 
 export function ChatArea({
   documentsCount,
+  documents = [],
   messages,
   asking,
   autoSpeak,
@@ -225,6 +228,25 @@ export function ChatArea({
   children,
 }: ChatAreaProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowExportMenu(false);
+      }
+    }
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showExportMenu]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -232,30 +254,31 @@ export function ChatArea({
 
   return (
     <div className="border border-line bg-panel rounded-xl overflow-hidden min-h-[480px] flex flex-col flex-1 mb-[25px] max-[760px]:min-h-[500px] max-[760px]:mb-4 transition-all">
-      <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-5 max-[760px]:px-3.5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent">
+      <div className="h-16 flex-[0_0_64px] border-b border-line flex items-center justify-between px-4 sm:px-5 gap-2 max-[760px]:px-3.5">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 mr-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 border border-line bg-panel-raised rounded-[9px] grid place-items-center text-accent shrink-0">
             <MenuBook style={{ fontSize: 18 }} />
           </div>
-          <div className="flex flex-col gap-1">
-            <strong className="text-[13.5px] font-semibold">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <strong className="text-[13px] sm:text-[13.5px] font-semibold truncate leading-tight">
               Document conversation
             </strong>
-            <span className="text-xs text-muted max-[760px]:text-[11.5px] flex items-center">
-              {documentsCount} {documentsCount === 1 ? 'document' : 'documents'}{' '}
-              in context <Circle style={{ fontSize: 7 }} className="text-[#9bd87c] mx-1.5" />{' '}
-              Ready to ask
+            <span className="text-[11.5px] sm:text-xs text-muted flex items-center truncate">
+              {documentsCount} {documentsCount === 1 ? 'doc' : 'docs'}
+              {!splitViewActive && ' in context'}
+              <Circle style={{ fontSize: 6 }} className="text-[#9bd87c] mx-1.5 shrink-0" />
+              Ready
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
           {documentsCount > 0 && onToggleSplitView && (
             <button
-              className={`h-[33px] flex items-center gap-1.5 border rounded-md text-xs px-2.5 transition-all duration-150 cursor-pointer ${
-                splitViewActive
-                  ? 'border-accent/50 bg-accent/15 text-accent font-semibold shadow-sm'
-                  : 'border-transparent bg-transparent text-muted hover:border-muted-2 hover:bg-panel-soft hover:text-text'
-              }`}
+              type="button"
+              className={`h-[32px] flex items-center gap-1.5 border rounded-md text-xs px-2.5 whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 ${splitViewActive
+                ? 'border-accent/50 bg-accent/15 text-accent font-semibold shadow-xs'
+                : 'border-transparent bg-transparent text-muted hover:border-muted-2 hover:bg-panel-soft hover:text-text'
+                }`}
               onClick={onToggleSplitView}
               title={
                 splitViewActive
@@ -263,34 +286,86 @@ export function ChatArea({
                   : 'Open document side-by-side'
               }
             >
-              <VerticalSplit style={{ fontSize: 16 }} />{' '}
+              <VerticalSplit style={{ fontSize: 16 }} />
               <span className="max-[760px]:hidden">
                 {splitViewActive ? 'Hide reader' : 'View document'}
               </span>
             </button>
           )}
           <button
-            className={`h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px] ${
-              autoSpeak
-                ? 'border-muted-2 bg-panel-soft text-text'
-                : 'text-muted'
-            }`}
+            type="button"
+            className={`h-[32px] flex items-center gap-1.5 border rounded-md text-xs px-2.5 whitespace-nowrap transition-[border-color,background,color] duration-150 cursor-pointer shrink-0 max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px] ${autoSpeak
+              ? 'border-muted-2 bg-panel-soft text-text'
+              : 'border-transparent bg-transparent text-muted hover:border-muted-2 hover:bg-panel-soft hover:text-text'
+              }`}
             onClick={onToggleAutoSpeak}
             title={
               autoSpeak ? 'Spoken answers enabled' : 'Spoken answers muted'
             }
           >
-            <VolumeUp style={{ fontSize: 16 }} />{' '}
-            {autoSpeak ? 'Voice answers: On' : 'Voice answers: Off'}
+            <VolumeUp style={{ fontSize: 16 }} />
+            <span>
+              {splitViewActive
+                ? autoSpeak
+                  ? 'Voice: On'
+                  : 'Voice: Off'
+                : autoSpeak
+                  ? 'Voice answers: On'
+                  : 'Voice answers: Off'}
+            </span>
           </button>
           <button
-            className="h-[33px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-muted text-xs px-2.5 transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
+            type="button"
+            className="h-[32px] flex items-center gap-1.5 border border-transparent rounded-md bg-transparent text-muted text-xs px-2.5 whitespace-nowrap transition-[border-color,background,color] duration-150 hover:border-muted-2 hover:bg-panel-soft hover:text-text cursor-pointer shrink-0 max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
             onClick={onToggleHistory}
+            title="Conversation history"
           >
-            <Forum style={{ fontSize: 16 }} /> History
+            <Forum style={{ fontSize: 16 }} />
+            <span>History</span>
           </button>
+          {messages.length > 0 && (
+            <div className="relative shrink-0" ref={exportMenuRef}>
+              <button
+                type="button"
+                className="h-[32px] flex items-center gap-1.5 border border-line rounded-md bg-panel-soft text-text text-xs px-2.5 whitespace-nowrap transition-[border-color,background,color] duration-150 hover:border-accent hover:text-accent cursor-pointer max-[760px]:text-[0px] max-[760px]:gap-0 max-[760px]:px-1.5 [&_svg]:max-[760px]:w-[17px] [&_svg]:max-[760px]:h-[17px]"
+                onClick={() => setShowExportMenu((prev) => !prev)}
+                title="Export report"
+              >
+                <FileDownload style={{ fontSize: 16 }} />
+                <span>{splitViewActive ? 'Export' : 'Export Report'}</span>
+                <KeyboardArrowDown style={{ fontSize: 14 }} className="text-muted" />
+              </button>
+              {showExportMenu && (
+                <div className="absolute right-0 top-[36px] z-30 w-52 bg-panel border border-line rounded-lg shadow-xl p-1 flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      downloadMarkdownReport(messages, documents);
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-text hover:bg-panel-soft hover:text-accent transition-colors text-left cursor-pointer w-full whitespace-nowrap"
+                  >
+                    <Description style={{ fontSize: 16 }} className="text-accent" />
+                    <span>Markdown Report (.md)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      printPdfReport(messages, documents);
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-text hover:bg-panel-soft hover:text-accent transition-colors text-left cursor-pointer w-full whitespace-nowrap"
+                  >
+                    <PictureAsPdf style={{ fontSize: 16 }} className="text-accent" />
+                    <span>PDF Report (.pdf)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <button
-            className="grid place-items-center w-[30px] h-[30px] border border-transparent rounded-[7px] bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text transition-colors"
+            type="button"
+            className="grid place-items-center w-[32px] h-[32px] border border-transparent rounded-md bg-transparent text-muted hover:border-line hover:bg-panel-soft hover:text-text transition-colors cursor-pointer shrink-0"
             onClick={onClearConversation}
             title="Clear conversation"
           >
@@ -340,11 +415,10 @@ export function ChatArea({
                 key={message.id}
               >
                 <div
-                  className={`h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] ${
-                    message.role === 'assistant'
-                      ? 'bg-accent text-accent-ink'
-                      : 'bg-panel-soft border border-line-strong text-muted'
-                  }`}
+                  className={`h-[34px] w-[34px] flex-[0_0_34px] rounded-[10px] grid place-items-center text-[13px] font-bold max-[760px]:h-[30px] max-[760px]:w-[30px] max-[760px]:flex-[0_0_30px] ${message.role === 'assistant'
+                    ? 'bg-accent text-accent-ink'
+                    : 'bg-panel-soft border border-line-strong text-muted'
+                    }`}
                 >
                   {message.role === 'assistant' ? (
                     <GraphicEq style={{ fontSize: 20 }} />
