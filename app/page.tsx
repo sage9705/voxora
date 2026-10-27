@@ -199,6 +199,7 @@ export default function Home() {
                   <div className="flex flex-col min-w-0 h-full">
                     <ChatArea
                       documentsCount={documents.length}
+                      documents={documents}
                       messages={messages}
                       asking={asking}
                       autoSpeak={autoSpeak}
@@ -262,6 +263,7 @@ export default function Home() {
                 <div className="flex-1 flex flex-col mt-4">
                   <ChatArea
                     documentsCount={documents.length}
+                    documents={documents}
                     messages={messages}
                     asking={asking}
                     autoSpeak={autoSpeak}
