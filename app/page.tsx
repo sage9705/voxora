@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Autorenew from '@mui/icons-material/Autorenew';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
 import { WelcomeGrid } from '@/components/WelcomeGrid';
@@ -42,11 +43,11 @@ export default function Home() {
     notice,
     setNotice,
     uploadFiles,
-    loadSamples,
     removeDocument,
     clearAllDocuments,
     clearConversation,
     askQuestion,
+    isHydrated,
   } = useDocumentChat();
 
   // Auto-select latest uploaded document
@@ -184,23 +185,30 @@ export default function Home() {
           }`}
         >
           {/* Show landing hero banner only when library is empty or in single-column chat mode */}
-          {!documents.length && <PageHeading />}
+          {isHydrated && !documents.length && <PageHeading />}
 
-          {!documents.length ? (
+          {!isHydrated ? (
+            <div className="flex-1 flex items-center justify-center min-h-[400px]">
+              <div className="flex items-center gap-2.5 text-muted text-sm font-medium">
+                <Autorenew className="animate-spin text-accent" style={{ fontSize: 20 }} />
+                <span>Restoring your workspace…</span>
+              </div>
+            </div>
+          ) : !documents.length ? (
             <WelcomeGrid
               uploading={uploading}
               onUploadFiles={uploadFiles}
-              onLoadSamples={loadSamples}
               onOpenFileInput={() => fileInput.current?.click()}
             />
           ) : (
             <>
               {/* Split Mode: Side-by-Side Chat & Document Viewer */}
               {workspaceMode === 'split' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 flex-1 items-stretch min-h-[620px] mt-4 mb-5">
-                  <div className="flex flex-col min-w-0 h-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 flex-1 items-stretch h-[calc(100vh-130px)] min-h-[580px] mt-2 mb-4">
+                  <div className="flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
                     <ChatArea
                       documentsCount={documents.length}
+                      documents={documents}
                       messages={messages}
                       asking={asking}
                       autoSpeak={autoSpeak}
@@ -226,7 +234,7 @@ export default function Home() {
                     </ChatArea>
                   </div>
 
-                  <div className="flex flex-col min-w-0 h-full">
+                  <div className="flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
                     <DocumentViewer
                       documents={documents}
                       activeDocumentId={activeDocId}
@@ -244,7 +252,7 @@ export default function Home() {
 
               {/* Full Document Reader View */}
               {workspaceMode === 'reader' && (
-                <div className="flex-1 flex flex-col min-h-[680px] mt-4 mb-5">
+                <div className="flex-1 flex flex-col h-[calc(100vh-130px)] min-h-[580px] min-h-0 mt-2 mb-4 overflow-hidden">
                   <DocumentViewer
                     documents={documents}
                     activeDocumentId={activeDocId}
@@ -264,6 +272,7 @@ export default function Home() {
                 <div className="flex-1 flex flex-col mt-4">
                   <ChatArea
                     documentsCount={documents.length}
+                    documents={documents}
                     messages={messages}
                     asking={asking}
                     autoSpeak={autoSpeak}

@@ -2,8 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerSource, ChatMessage, DocumentRecord } from '@/lib/types';
-import { SAMPLE_DOCUMENTS } from '@/lib/constants';
 import { rankChunks } from '@/lib/retrieval';
+import {
+  clearStorageDocuments,
+  clearStorageMessages,
+  loadDocumentsFromStorage,
+  loadMessagesFromStorage,
+  removeDocumentFromStorage,
+  saveDocumentsToStorage,
+  saveMessagesToStorage,
+} from '@/lib/workspacePersistence';
 
 type ApiAnswer = {
   answer: string;
@@ -51,6 +59,47 @@ export function useDocumentChat() {
   const [uploading, setUploading] = useState(false);
   const [asking, setAsking] = useState(false);
   const [notice, setNotice] = useState('');
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    void (async () => {
+      try {
+        const [savedDocs, savedMsgs] = await Promise.all([
+          loadDocumentsFromStorage(),
+          loadMessagesFromStorage(),
+        ]);
+        if (isMounted) {
+          if (savedDocs.length > 0) {
+            setDocuments(savedDocs);
+          }
+          if (savedMsgs.length > 0) {
+            setMessages(savedMsgs);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to restore workspace session:', err);
+      } finally {
+        if (isMounted) {
+          setIsHydrated(true);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void saveDocumentsToStorage(documents);
+  }, [documents, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void saveMessagesToStorage(messages);
+  }, [messages, isHydrated]);
 
   const chunks = useMemo(
     () => documents.flatMap((doc) => doc.chunks || []),
@@ -126,42 +175,6 @@ export function useDocumentChat() {
     [documents],
   );
 
-  const loadSamples = useCallback(async () => {
-    setUploading(true);
-    setNotice('Loading the sample manuals…');
-
-    for (const sample of SAMPLE_DOCUMENTS) {
-      if (documents.some((doc) => doc.name === sample.name)) continue;
-      try {
-        const response = await fetch(sample.path);
-        const blob = await response.blob();
-        const file = new File([blob], sample.name, { type: 'application/pdf' });
-        const form = new FormData();
-        form.append('file', file);
-        const result = await fetch('/api/ingest', {
-          method: 'POST',
-          body: form,
-        });
-        const data = await result.json();
-        if (!result.ok) throw new Error(data.error || 'Could not load sample');
-        const newDoc = (data.document || data.documents?.[0]) as DocumentRecord;
-        if (newDoc) {
-          setDocuments((current) => [...current, newDoc]);
-        }
-      } catch (error) {
-        setNotice(
-          error instanceof Error
-            ? error.message
-            : 'Unable to load sample documents.',
-        );
-      }
-    }
-    setUploading(false);
-    setNotice(
-      'Sample manuals are ready. Try asking what changed between versions or compare Model A and B.',
-    );
-  }, [documents]);
-
   // If custom documents lack suggestedQuestions, fetch AI-extracted questions in background
   useEffect(() => {
     const customDocsWithoutStarters = documents.filter(
@@ -219,16 +232,19 @@ export function useDocumentChat() {
 
   const removeDocument = useCallback((id: string, name: string) => {
     setDocuments((current) => current.filter((item) => item.id !== id));
-    setNotice(`${name} removed from this session.`);
+    void removeDocumentFromStorage(id);
+    setNotice(`${name} removed from your workspace.`);
   }, []);
 
   const clearAllDocuments = useCallback(() => {
     setDocuments([]);
-    setNotice('All documents removed from this session.');
+    void clearStorageDocuments();
+    setNotice('All documents removed from your workspace.');
   }, []);
 
   const clearConversation = useCallback(() => {
     setMessages([]);
+    void clearStorageMessages();
     setNotice(
       'Conversation cleared. Your loaded documents are still available.',
     );
@@ -364,10 +380,10 @@ export function useDocumentChat() {
     setNotice,
     chunks,
     uploadFiles,
-    loadSamples,
     removeDocument,
     clearAllDocuments,
     clearConversation,
     askQuestion,
+    isHydrated,
   };
 }
